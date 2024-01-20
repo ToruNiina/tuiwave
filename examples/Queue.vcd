@@ -1,0 +1,326 @@
+$date
+2024-01-20T08:47+0900
+$end
+$version
+0.2
+$end
+$comment
+
+$end
+$timescale 1ns  $end
+$scope module Queue $end
+ $var wire 3 " ptr_diff $end
+ $var wire 1 # do_enq $end
+ $var wire 8 $ ram $end
+ $var wire 8 % io_deq_bits $end
+ $var wire 3 & enq_ptr_value $end
+ $var wire 1 ( io_enq_ready $end
+ $var wire 1 ) io_deq_valid $end
+ $var wire 8 , io_enq_bits $end
+ $var wire 1 - empty $end
+ $var wire 4 / io_count $end
+ $var wire 1 0 clock $end
+ $var wire 1 2 maybe_full $end
+ $var wire 1 3 do_deq $end
+ $var wire 1 8 ptr_match $end
+ $var wire 3 : deq_ptr_value $end
+ $var wire 1 ; io_deq_ready $end
+ $var wire 1 < reset $end
+ $var wire 1 > full $end
+ $var wire 1 A io_enq_valid $end
+  $scope module ram $end
+   $var wire 8 4 MPORT $end
+    $scope module io_deq_bits_MPORT $end
+     $var wire 8 ! data $end
+     $var wire 1 1 en $end
+     $var wire 3 6 addr $end
+     $var wire 1 @ clk $end
+    $upscope $end
+    $scope module MPORT $end
+     $var wire 8 ' data $end
+     $var wire 8 * pipeline_data_0 $end
+     $var wire 1 + pipeline_valid_0 $end
+     $var wire 1 . en $end
+     $var wire 1 5 mask $end
+     $var wire 1 7 clk $end
+     $var wire 1 9 valid $end
+     $var wire 3 = pipeline_addr_0 $end
+     $var wire 3 ? addr $end
+    $upscope $end
+  $upscope $end
+$upscope $end
+$enddefinitions $end
+$dumpvars
+0;
+0<
+0>
+b00000000 *
+15
+07
+b00000000 ,
+b000 &
+08
+0#
+09
+b00000000 %
+b000 =
+02
+11
+03
+b00000000 '
+b000 ?
+b000 "
+0-
+b00000000 !
+b0000 /
+0.
+b000 :
+00
+b00000000 $
+0(
+0)
+b000 6
+b00000000 4
+0+
+0@
+0A
+$end
+#0
+1-
+1<
+18
+1(
+#1
+10
+1@
+17
+#6
+00
+0<
+0@
+07
+#11
+10
+1@
+17
+#16
+00
+0@
+1.
+1#
+19
+b10101011 '
+07
+1A
+b10101011 ,
+#21
+0-
+b10101011 %
+b001 &
+17
+b0001 /
+1)
+b10101011 !
+10
+b001 ?
+b001 "
+1@
+08
+12
+b10101011 *
+1+
+#26
+00
+0@
+b00000001 '
+07
+b00000001 ,
+#31
+10
+b010 ?
+b010 "
+1@
+b010 &
+b00000001 *
+b001 =
+17
+b0010 /
+#36
+00
+0@
+b11000111 '
+07
+b11000111 ,
+#41
+10
+b011 ?
+b011 "
+1@
+b011 &
+b11000111 *
+b010 =
+17
+b0011 /
+#46
+00
+0@
+b10110000 '
+07
+b10110000 ,
+#51
+10
+b100 ?
+b100 "
+1@
+b100 &
+b10110000 *
+b011 =
+17
+b0100 /
+#56
+13
+00
+0@
+b10100100 '
+07
+b10100100 ,
+1;
+#61
+b00000001 !
+10
+b101 ?
+b00000001 %
+1@
+b101 &
+b10100100 *
+b001 6
+b100 =
+b001 :
+17
+#66
+00
+0@
+b00100100 '
+07
+b00100100 ,
+#71
+b11000111 !
+10
+b110 ?
+b11000111 %
+1@
+b110 &
+b00100100 *
+b010 6
+b101 =
+b010 :
+17
+#76
+00
+0@
+b10011010 '
+07
+b10011010 ,
+#81
+b10110000 !
+10
+b111 ?
+b10110000 %
+1@
+b111 &
+b10011010 *
+b011 6
+b110 =
+b011 :
+17
+#86
+00
+0@
+b10001111 '
+07
+b10001111 ,
+#91
+b10100100 !
+10
+b000 ?
+b10100100 %
+1@
+b000 &
+b10001111 *
+b100 6
+b111 =
+b100 :
+17
+#96
+00
+0@
+0.
+0#
+09
+b00000000 '
+07
+0A
+b00000000 ,
+#101
+b00100100 !
+10
+b00100100 %
+b011 "
+1@
+02
+b00000000 *
+b101 6
+b000 =
+b101 :
+17
+0+
+b0011 /
+#106
+00
+0@
+07
+#111
+b10011010 !
+10
+b10011010 %
+b010 "
+1@
+b110 6
+b110 :
+17
+b0010 /
+#116
+00
+0@
+07
+#121
+b10001111 !
+10
+b10001111 %
+b001 "
+1@
+b111 6
+b111 :
+17
+b0001 /
+#126
+00
+0@
+07
+#131
+03
+10
+1-
+b10101011 !
+b10101011 %
+b000 "
+1@
+18
+b000 6
+b000 :
+17
+b0000 /
+0)
+#136
+00
+0;
