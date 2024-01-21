@@ -4,6 +4,9 @@ mod load_vcd;
 use crate::timeseries::*;
 use crate::load_vcd::*;
 
+use crossterm::ExecutableCommand;
+use ratatui::style::Stylize;
+
 use std::env;
 
 fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64) -> String {
@@ -142,8 +145,38 @@ fn main() {
             }
         }
     }
-
     print_values(&ts, &ts.scope, 0, t_last + 1);
+
+    std::io::stdout().execute(crossterm::terminal::EnterAlternateScreen).unwrap();
+    crossterm::terminal::enable_raw_mode().unwrap();
+    let mut terminal = ratatui::terminal::Terminal::new(
+        ratatui::backend::CrosstermBackend::new(std::io::stdout())).unwrap();
+    terminal.clear().unwrap();
+
+    loop {
+        terminal.draw(|frame| {
+            let area = frame.size();
+            frame.render_widget(
+                ratatui::widgets::Paragraph::new("Hello Ratatui! (press 'q' to quit)")
+                    .white()
+                    .on_blue(),
+                area,
+            );
+        }).unwrap();
+
+        if crossterm::event::poll(std::time::Duration::from_millis(16)).unwrap() {
+            if let crossterm::event::Event::Key(key) = crossterm::event::read().unwrap() {
+                if key.kind == crossterm::event::KeyEventKind::Press
+                    && key.code == crossterm::event::KeyCode::Char('q')
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    std::io::stdout().execute(crossterm::terminal::LeaveAlternateScreen).unwrap();
+    crossterm::terminal::disable_raw_mode().unwrap();
 
     return ;
 }
