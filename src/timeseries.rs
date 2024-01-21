@@ -1,5 +1,3 @@
-use std::collections::*;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct UInt {
     pub value: u64,
@@ -94,14 +92,6 @@ impl ValueChangeStream {
         }
         lower
     }
-
-    pub fn value_at(&self, t: u64) -> &Value {
-        &self.history[self.index_at(t)].new_value
-    }
-    pub fn value_at_mut(&mut self, t: u64) -> &mut Value {
-        let idx = self.index_at(t);
-        &mut self.history[idx].new_value
-    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -113,32 +103,6 @@ pub struct Scope {
 impl Scope {
     pub fn new(name: &str) -> Self {
         Self{ name: name.to_string(), items: Vec::new() }
-    }
-
-    pub fn find_value(&self, path: &[String]) -> Option<usize> {
-        if path.is_empty() {
-            return None;
-        }
-
-        for item in self.items.iter() {
-            match item {
-                ScopeItem::Scope(s) => {
-                    if s.name == path[0] {
-                        return s.find_value(&path[1..path.len()]);
-                    }
-                }
-                ScopeItem::Value(v) => {
-                    if v.name == path[0] {
-                        if path.len() == 1 {
-                            return Some(v.index);
-                        } else {
-                            panic!("extraneous path: {:?}", &path[1..path.len()]);
-                        }
-                    }
-                }
-            }
-        }
-        None
     }
 }
 
