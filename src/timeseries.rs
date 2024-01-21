@@ -79,7 +79,11 @@ impl ValueChangeStream {
             return None;
         }
         if t == 0 {
-            return Some(0);
+            if self.history[0].time != 0 {
+                return None;
+            } else {
+                return Some(0);
+            }
         }
         let mut lower = 0;
         let mut upper = self.history.len();
