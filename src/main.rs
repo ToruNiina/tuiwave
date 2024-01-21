@@ -18,7 +18,7 @@ fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t
     let change_to   = timeline.index_at(t_to).map(|i| i+1 ).unwrap_or(0);
 
     let mut spans = Vec::new();
-    spans.push(Span::styled(name, Style::new().fg(Color::LightGreen).bg(Color::Black)));
+    spans.push(Span::styled(name, Style::new().fg(Color::White).bg(Color::Black)));
 
     let style_bit = Style::new().fg(Color::LightGreen).bg(Color::Black);
     let style_var = Style::new().fg(Color::Black).bg(Color::LightGreen);
