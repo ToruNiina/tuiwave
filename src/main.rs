@@ -253,6 +253,64 @@ fn load_vcd<R: std::io::BufRead>(mut parser: vcd::Parser<R>) -> std::io::Result<
     Ok(ts)
 }
 
+fn format_time_series(timeline: &ValueChangeStream) -> String {
+    let mut s = String::new();
+    let mut t = 0;
+    let mut v = Value::Bits(Bits::Z);
+    for change in timeline.history.iter() {
+        for _ in t..change.time {
+            match v {
+                Value::Bits(bits) => {
+                    match bits {
+                        Bits::V(x) => {
+                            s += &format!(" {:x}", x.value);
+                        }
+                        Bits::X => {
+                            s += " X";
+                        }
+                        Bits::Z => {
+                            s += " Z";
+                        }
+                    }
+                }
+                Value::Real(x) => {
+                    s += &format!(" {}", x);
+                }
+                Value::String(ref x) => {
+                    s += &format!(" {}", x);
+                }
+            }
+        }
+        v = change.new_value.clone();
+        t = change.time;
+    }
+    s
+}
+
+fn print_values(ts: &TimeSeries, s: &Scope) {
+    println!("scope {}", s.name);
+    for item in s.items.iter() {
+        match item {
+            ScopeItem::Value(v) => {
+                println!("{}:{}", v.name, format_time_series(&ts.values[v.index]));
+            }
+            ScopeItem::Scope(_) => {
+                // do nothing
+            }
+        }
+    }
+    for item in s.items.iter() {
+        match item {
+            ScopeItem::Value(_) => {
+                // do nothing
+            }
+            ScopeItem::Scope(subscope) => {
+                print_values(ts, subscope);
+            }
+        }
+    }
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
@@ -266,6 +324,7 @@ fn main() {
     let parser = vcd::Parser::new(f);
     let ts = load_vcd(parser).unwrap();
 
-    println!("{:?}", ts);
+    print_values(&ts, &ts.scope);
+
     return ;
 }
