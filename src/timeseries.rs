@@ -31,6 +31,17 @@ impl Bits {
         let w = value.len();
         assert!(w <= 64);
 
+        let bits: Vec<vcd::Value> = value.iter().collect();
+
+        if w == 1 {
+            return match bits[0] {
+                vcd::Value::V0 => { Bits::B(false) },
+                vcd::Value::V1 => { Bits::B(true)  },
+                vcd::Value::X  => { Bits::X },
+                vcd::Value::Z  => { Bits::Z },
+            }
+        }
+
         let mut v = UInt::new(0, w);
         let mut digit: u64 = 1;
         for bit in value.iter() {
