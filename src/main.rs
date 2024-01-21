@@ -272,8 +272,10 @@ fn main() {
                         t_from = t_from.saturating_add(resolution);
                         t_to   = t_to  .saturating_add(resolution);
                     } else if key.code == KeyCode::Char('h') || key.code == KeyCode::Left {
-                        t_from = t_from.saturating_sub(resolution);
-                        t_to   = t_to  .saturating_sub(resolution);
+                        if t_from != 0 {
+                            t_from = t_from.saturating_sub(resolution);
+                            t_to   = t_to  .saturating_sub(resolution);
+                        }
                     } else if key.code == KeyCode::Char('+') {
                         resolution += 1;
                     } else if key.code == KeyCode::Char('-') {
