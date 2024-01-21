@@ -6,7 +6,7 @@ use crate::load_vcd::*;
 
 use std::env;
 
-fn format_time_series(timeline: &ValueChangeStream) -> String {
+fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_until: u64) -> String {
     let mut s = String::new();
     let mut t = 0;
     let mut v = Value::Bits(Bits::Z);
@@ -64,12 +64,12 @@ fn format_time_series(timeline: &ValueChangeStream) -> String {
     s
 }
 
-fn print_values(ts: &TimeSeries, s: &Scope) {
+fn print_values(ts: &TimeSeries, s: &Scope, t_from: u64, t_until: u64) {
     println!("scope {}", s.name);
     for item in s.items.iter() {
         match item {
             ScopeItem::Value(v) => {
-                println!("{:20}:{}", v.name, format_time_series(&ts.values[v.index]));
+                println!("{:20}:{}", v.name, format_time_series(&ts.values[v.index], t_from, t_until));
             }
             ScopeItem::Scope(_) => {
                 // do nothing
@@ -82,7 +82,7 @@ fn print_values(ts: &TimeSeries, s: &Scope) {
                 // do nothing
             }
             ScopeItem::Scope(subscope) => {
-                print_values(ts, subscope);
+                print_values(ts, subscope, t_from, t_until);
             }
         }
     }
@@ -98,7 +98,16 @@ fn main() {
     let f = std::fs::File::open(&args[1]).unwrap();
     let ts = load_vcd(std::io::BufReader::new(f)).unwrap();
 
-    print_values(&ts, &ts.scope);
+    let mut t_last = 0;
+    for vs in ts.values.iter() {
+        for change in vs.history.iter() {
+            if t_last < change.time {
+                t_last = change.time;
+            }
+        }
+    }
+
+    print_values(&ts, &ts.scope, 0, t_last + 1);
 
     return ;
 }
