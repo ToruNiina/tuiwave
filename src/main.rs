@@ -39,7 +39,7 @@ fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64) -> S
                             s += "X   ";
                         }
                         Bits::Z => {
-                            s += " Z   ";
+                            s += "Z   ";
                         }
                     }
                 }
@@ -85,7 +85,7 @@ fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64) -> S
                         s += "X   ";
                     }
                     Bits::Z => {
-                        s += " Z   ";
+                        s += "Z   ";
                     }
                 }
             }
