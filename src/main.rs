@@ -5,6 +5,9 @@ use crate::timeseries::*;
 use crate::load_vcd::*;
 
 use crossterm::ExecutableCommand;
+use crossterm::event::{
+    Event, KeyEventKind, KeyCode
+};
 use ratatui::style::{Style, Color};
 use ratatui::text::{Line, Span};
 
@@ -36,7 +39,7 @@ fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t
                         Bits::B(x) => {
                             currently_bad = false;
                             if x {
-                                ("████".to_string(), style_bit)
+                                ("▔▔▔▔".to_string(), style_bit)
                             } else {
                                 ("▁▁▁▁".to_string(), style_bit)
                             }
@@ -76,9 +79,9 @@ fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t
                     match bits {
                         Bits::B(x) => {
                             if x {
-                                spans.push(Span::styled("▁".to_string(), style_bit));
+                                spans.push(Span::styled("▁".to_string(), style_bit));
                             } else {
-                                spans.push(Span::styled("▁".to_string(), style_bit));
+                                spans.push(Span::styled("▁".to_string(), style_bit));
                             }
                         }
                         Bits::V(_) => {
@@ -247,21 +250,37 @@ fn main() {
         ratatui::backend::CrosstermBackend::new(std::io::stdout())).unwrap();
     terminal.clear().unwrap();
 
+    let mut resolution = 1;
+    let mut t_from = 0;
+    let mut t_to = t_last+1;
+
     loop {
         terminal.draw(|frame| {
             let area = frame.size();
             frame.render_widget(
-                ratatui::widgets::Paragraph::new(show_values(&ts, &ts.scope, 0, t_last+1)),
+                ratatui::widgets::Paragraph::new(show_values(&ts, &ts.scope, t_from, t_to)),
                 area,
             );
         }).unwrap();
 
         if crossterm::event::poll(std::time::Duration::from_millis(16)).unwrap() {
-            if let crossterm::event::Event::Key(key) = crossterm::event::read().unwrap() {
-                if key.kind == crossterm::event::KeyEventKind::Press
-                    && key.code == crossterm::event::KeyCode::Char('q')
-                {
-                    break;
+            if let Event::Key(key) = crossterm::event::read().unwrap() {
+                if key.kind == KeyEventKind::Press {
+                    if key.code == KeyCode::Char('q') {
+                        break;
+                    } else if key.code == KeyCode::Char('l') || key.code == KeyCode::Right {
+                        t_from = t_from.saturating_add(resolution);
+                        t_to   = t_to  .saturating_add(resolution);
+                    } else if key.code == KeyCode::Char('h') || key.code == KeyCode::Left {
+                        t_from = t_from.saturating_sub(resolution);
+                        t_to   = t_to  .saturating_sub(resolution);
+                    } else if key.code == KeyCode::Char('+') {
+                        resolution += 1;
+                    } else if key.code == KeyCode::Char('-') {
+                        if 1 < resolution {
+                            resolution -= 1;
+                        }
+                    }
                 }
             }
         }
