@@ -5,110 +5,178 @@ use crate::timeseries::*;
 use crate::load_vcd::*;
 
 use crossterm::ExecutableCommand;
-use ratatui::style::Stylize;
+use ratatui::style::{Style, Stylize, Color};
+use ratatui::text::{Line, Span};
 
 use std::env;
 
-fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64) -> String {
-    let mut s = String::new();
-    let mut t = 0;
-    let mut v = Value::Bits(Bits::Z);
+fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t_to: u64) -> Line {
+    let mut current_t = 0;
+    let mut current_v = Value::Bits(Bits::Z);
 
     let change_from = timeline.index_at(t_from).unwrap_or(0);
     let change_to   = timeline.index_at(t_to).map(|i| i+1 ).unwrap_or(0);
 
+    let mut spans = Vec::new();
+    spans.push(Span::styled(name, Style::new().fg(Color::LightGreen).bg(Color::Black)));
+
+    let style_bit = Style::new().fg(Color::LightGreen).bg(Color::Black);
+    let style_var = Style::new().fg(Color::Black).bg(Color::LightGreen);
+    let style_bad = Style::new().fg(Color::Black).bg(Color::LightRed);
+
+    let mut currently_bad = false;
+
     for i in change_from..change_to {
         let change = &timeline.history[i];
         // print the current value
-        for _ in t..change.time {
-            match v {
+        for t in current_t..change.time {
+            let (mut txt, sty) = match current_v {
                 Value::Bits(bits) => {
                     match bits {
                         Bits::B(x) => {
+                            currently_bad = false;
                             if x {
-                                s += "▁▁▁▁";
+                                ("████".to_string(), style_bit)
                             } else {
-                                s += "████";
+                                ("▁▁▁▁".to_string(), style_bit)
                             }
                         }
                         Bits::V(x) => {
-                            if x.width == 1 {
-                                s += &format!("{:<4x}", x.value);
-                            } else {
-                                s += &format!("{:<4x}", x.value);
-                            }
+                            currently_bad = false;
+                            (format!("{:<4x}", x.value), style_var)
                         }
                         Bits::X => {
-                            s += "X   ";
+                            currently_bad = true;
+                            (" X  ".to_string(), style_bad)
                         }
                         Bits::Z => {
-                            s += "Z   ";
+                            currently_bad = true;
+                            (" Z  ".to_string(), style_bad)
                         }
                     }
                 }
                 Value::Real(x) => {
-                    s += &format!("{:4}", x);
+                    currently_bad = false;
+                    (format!("{:<4}", x), style_var)
                 }
                 Value::String(ref x) => {
-                    s += &format!("{:4}", x);
+                    currently_bad = false;
+                    (format!("{:<4}", x), style_var)
+                }
+            };
+            if t+1 == change.time {
+                txt.pop();
+                txt.pop();
+            }
+            spans.push(Span::styled(txt, sty));
+        }
+        if i != 0 {
+            match change.new_value {
+                Value::Bits(bits) => {
+                    match bits {
+                        Bits::B(x) => {
+                            if x {
+                                spans.push(Span::styled("▁".to_string(), style_bit));
+                            } else {
+                                spans.push(Span::styled("▁".to_string(), style_bit));
+                            }
+                        }
+                        Bits::V(_) => {
+                            spans.push(Span::styled("".to_string(),
+                                Style::new().fg(Color::LightGreen).bg(Color::Black)
+                            ));
+                        }
+                        Bits::X => {
+                            if currently_bad {
+                                spans.push(Span::styled("".to_string(),
+                                    Style::new().fg(Color::LightRed).bg(Color::Black)
+                                ));
+                            } else {
+                                spans.push(Span::styled("".to_string(),
+                                    Style::new().fg(Color::LightGreen).bg(Color::Black)
+                                ));
+                                spans.push(Span::styled("".to_string(),
+                                    Style::new().fg(Color::LightRed).bg(Color::Black)
+                                ));
+                            }
+                        }
+                        Bits::Z => {
+                            if currently_bad {
+                                spans.push(Span::styled("".to_string(),
+                                    Style::new().fg(Color::LightRed).bg(Color::Black)
+                                ));
+                            } else {
+                                spans.push(Span::styled("".to_string(),
+                                    Style::new().fg(Color::LightGreen).bg(Color::Black)
+                                ));
+                                spans.push(Span::styled("".to_string(),
+                                    Style::new().fg(Color::LightRed).bg(Color::Black)
+                                ));
+                            }
+                        }
+                    }
+                }
+                Value::Real(_) => {
+                    spans.push(Span::styled("".to_string(),
+                        Style::new().fg(Color::LightRed).bg(Color::Black)
+                    ));
+                }
+                Value::String(_) => {
+                    spans.push(Span::styled("".to_string(),
+                        Style::new().fg(Color::LightRed).bg(Color::Black)
+                    ));
                 }
             }
         }
-        if i != 0 {
-            s.pop();
-            s.pop();
-            s += if let Value::Bits(Bits::B(x)) = change.new_value {
-                    if x { "▁" } else { "▁" }
-                } else {
-                    ""
-                };
-        }
-        v = change.new_value.clone();
-        t = change.time;
+        current_v = change.new_value.clone();
+        current_t = change.time;
     }
-    for _ in t..t_to {
-        match v {
+
+    for _ in current_t..t_to {
+        let (txt, sty) = match current_v {
             Value::Bits(bits) => {
                 match bits {
                     Bits::B(x) => {
                         if x {
-                            s += "▁▁▁▁";
+                            ("████".to_string(), style_bit)
                         } else {
-                            s += "████";
+                            ("▁▁▁▁".to_string(), style_bit)
                         }
                     }
                     Bits::V(x) => {
-                        if x.width == 1 {
-                            s += &format!("{:<4x}", x.value);
-                        } else {
-                            s += &format!("{:<4x}", x.value);
-                        }
+                        (format!("{:<4x}", x.value), style_var)
                     }
                     Bits::X => {
-                        s += "X   ";
+                        (" X  ".to_string(), style_bad)
                     }
                     Bits::Z => {
-                        s += "Z   ";
+                        (" Z  ".to_string(), style_bad)
                     }
                 }
             }
             Value::Real(x) => {
-                s += &format!("{:4}", x);
+                (format!("{:<4}", x), style_var)
             }
             Value::String(ref x) => {
-                s += &format!("{:4}", x);
+                (format!("{:<4}", x), style_var)
             }
-        }
+        };
+        spans.push(Span::styled(txt, sty));
     }
-    s
+    ratatui::text::Line::from(spans)
 }
 
-fn print_values(ts: &TimeSeries, s: &Scope, t_from: u64, t_to: u64) {
-    println!("scope {}", s.name);
+fn show_values<'a>(ts: &'a TimeSeries, s: &'a Scope, t_from: u64, t_to: u64) -> Vec<Line<'a>> {
+    let mut lines = Vec::new();
+
     for item in s.items.iter() {
         match item {
             ScopeItem::Value(v) => {
-                println!("{:20}:{}", v.name, format_time_series(&ts.values[v.index], t_from, t_to));
+                lines.push(Line::from(""));
+                lines.push(format_time_series(
+                    format!("{:20}", v.name),
+                    &ts.values[v.index], t_from, t_to
+                ));
             }
             ScopeItem::Scope(_) => {
                 // do nothing
@@ -121,11 +189,37 @@ fn print_values(ts: &TimeSeries, s: &Scope, t_from: u64, t_to: u64) {
                 // do nothing
             }
             ScopeItem::Scope(subscope) => {
-                print_values(ts, subscope, t_from, t_to);
+                let ls = show_values(ts, subscope, t_from, t_to);
+                lines.extend(ls.into_iter());
             }
         }
     }
+    lines
 }
+
+// fn print_values(ts: &TimeSeries, s: &Scope, t_from: u64, t_to: u64) {
+//     println!("scope {}", s.name);
+//     for item in s.items.iter() {
+//         match item {
+//             ScopeItem::Value(v) => {
+//                 println!("{:20}:{}", v.name, format_time_series(&ts.values[v.index], t_from, t_to));
+//             }
+//             ScopeItem::Scope(_) => {
+//                 // do nothing
+//             }
+//         }
+//     }
+//     for item in s.items.iter() {
+//         match item {
+//             ScopeItem::Value(_) => {
+//                 // do nothing
+//             }
+//             ScopeItem::Scope(subscope) => {
+//                 print_values(ts, subscope, t_from, t_to);
+//             }
+//         }
+//     }
+// }
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -145,7 +239,7 @@ fn main() {
             }
         }
     }
-    print_values(&ts, &ts.scope, 0, t_last + 1);
+    // print_values(&ts, &ts.scope, 0, t_last + 1);
 
     std::io::stdout().execute(crossterm::terminal::EnterAlternateScreen).unwrap();
     crossterm::terminal::enable_raw_mode().unwrap();
@@ -157,9 +251,7 @@ fn main() {
         terminal.draw(|frame| {
             let area = frame.size();
             frame.render_widget(
-                ratatui::widgets::Paragraph::new("Hello Ratatui! (press 'q' to quit)")
-                    .white()
-                    .on_blue(),
+                ratatui::widgets::Paragraph::new(show_values(&ts, &ts.scope, 0, t_last+1)),
                 area,
             );
         }).unwrap();
