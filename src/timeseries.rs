@@ -74,7 +74,13 @@ impl ValueChangeStream {
         Self{ history: Vec::new() }
     }
 
-    pub fn index_at(&self, t: u64) -> usize {
+    pub fn index_at(&self, t: u64) -> Option<usize> {
+        if self.history.is_empty() {
+            return None;
+        }
+        if t == 0 {
+            return Some(0);
+        }
         let mut lower = 0;
         let mut upper = self.history.len();
         while 1 < upper - lower {
@@ -90,7 +96,7 @@ impl ValueChangeStream {
                 break;
             }
         }
-        lower
+        Some(lower)
     }
 }
 
