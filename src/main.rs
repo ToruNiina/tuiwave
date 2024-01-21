@@ -5,7 +5,7 @@ use crate::timeseries::*;
 use crate::load_vcd::*;
 
 use crossterm::ExecutableCommand;
-use ratatui::style::{Style, Stylize, Color};
+use ratatui::style::{Style, Color};
 use ratatui::text::{Line, Span};
 
 use std::env;
