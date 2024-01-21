@@ -44,7 +44,7 @@ impl Bits {
 
         let mut v = UInt::new(0, w);
         let mut digit: u64 = 1;
-        for bit in value.iter() {
+        for bit in bits.iter().rev() {
             match bit {
                 vcd::Value::V0 => { /* do nothing */ }
                 vcd::Value::V1 => { v.value += digit; }
