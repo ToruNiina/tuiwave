@@ -10,29 +10,53 @@ fn format_time_series(timeline: &ValueChangeStream) -> String {
     let mut s = String::new();
     let mut t = 0;
     let mut v = Value::Bits(Bits::Z);
-    for change in timeline.history.iter() {
+
+    for (i, change) in timeline.history.iter().enumerate() {
+        // println!("change = {:?}", change);
+
+        // print the current value
         for _ in t..change.time {
             match v {
                 Value::Bits(bits) => {
                     match bits {
+                        Bits::B(x) => {
+                            if x {
+                                s += "▁▁▁▁";
+                            } else {
+                                s += "████";
+                            }
+                        }
                         Bits::V(x) => {
-                            s += &format!(" {:x}", x.value);
+                            if x.width == 1 {
+                                s += &format!("{:<4x}", x.value);
+                            } else {
+                                s += &format!("{:<4x}", x.value);
+                            }
                         }
                         Bits::X => {
-                            s += " X";
+                            s += "X   ";
                         }
                         Bits::Z => {
-                            s += " Z";
+                            s += " Z   ";
                         }
                     }
                 }
                 Value::Real(x) => {
-                    s += &format!(" {}", x);
+                    s += &format!("{:4}", x);
                 }
                 Value::String(ref x) => {
-                    s += &format!(" {}", x);
+                    s += &format!("{:4}", x);
                 }
             }
+        }
+        if i != 0 {
+            s.pop();
+            s.pop();
+            s += if let Value::Bits(Bits::B(x)) = change.new_value {
+                    if x { "▁" } else { "▁" }
+                } else {
+                    ""
+                };
         }
         v = change.new_value.clone();
         t = change.time;
@@ -45,7 +69,7 @@ fn print_values(ts: &TimeSeries, s: &Scope) {
     for item in s.items.iter() {
         match item {
             ScopeItem::Value(v) => {
-                println!("{}:{}", v.name, format_time_series(&ts.values[v.index]));
+                println!("{:20}:{}", v.name, format_time_series(&ts.values[v.index]));
             }
             ScopeItem::Scope(_) => {
                 // do nothing
