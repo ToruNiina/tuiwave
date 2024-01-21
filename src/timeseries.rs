@@ -14,6 +14,7 @@ impl UInt {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Bits {
+    B(bool),
     V(UInt),
     X,
     Z,
@@ -22,8 +23,8 @@ pub enum Bits {
 impl Bits {
     pub fn from_vcd_scalar(value: vcd::Value) -> Self {
         match value {
-            vcd::Value::V0 => { Bits::V(UInt::new(1, 1)) },
-            vcd::Value::V1 => { Bits::V(UInt::new(0, 1)) },
+            vcd::Value::V0 => { Bits::B(false) },
+            vcd::Value::V1 => { Bits::B(true)  },
             vcd::Value::X  => { Bits::X },
             vcd::Value::Z  => { Bits::Z },
         }
