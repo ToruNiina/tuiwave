@@ -74,17 +74,19 @@ impl ValueChangeStream {
         Self{ history: Vec::new() }
     }
 
-    pub fn index_at(&self, t: u64) -> Option<usize> {
-        if self.history.is_empty() {
-            return None;
-        }
-        if t == 0 {
-            if self.history[0].time != 0 {
+    pub fn change_before(&self, t: u64) -> Option<usize> {
+        if let Some(first) = self.history.first() {
+            if t < first.time {
                 return None;
-            } else {
-                return Some(0);
             }
+        } else {
+            return None; // empty!
         }
+
+        if t == 0 {
+            return Some(0); // first.time <= t, and t is u64
+        }
+
         let mut lower = 0;
         let mut upper = self.history.len();
         while 1 < upper - lower {
@@ -102,6 +104,35 @@ impl ValueChangeStream {
         }
         Some(lower)
     }
+
+    /// exclusive
+    pub fn change_after(&self, t: u64) -> Option<usize> {
+        if let Some(last) = self.history.last() {
+            if last.time < t {
+                return None;
+            }
+        } else {
+            return None; // empty!
+        }
+
+        let mut lower = 0;
+        let mut upper = self.history.len();
+        while 1 < upper - lower {
+            assert!(lower <= upper);
+            let mid = (upper + lower) / 2;
+            let t_mid = self.history[mid].time;
+            if t_mid < t {
+                lower = mid;
+            } else if t < t_mid {
+                upper = mid;
+            } else { // t == t_mid
+                upper = mid+1;
+                break
+            }
+        }
+        Some(upper)
+    }
+
 }
 
 #[derive(Debug, Clone, PartialEq)]
