@@ -14,11 +14,17 @@ use ratatui::text::{Line, Span};
 use std::env;
 
 fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t_to: u64) -> Line {
-    let mut current_t = 0;
+
+    let mut current_t = t_from;
     let mut current_v = Value::Bits(Bits::Z);
 
-    let change_from = timeline.index_at(t_from).unwrap_or(0);
-    let change_to   = timeline.index_at(t_to).map(|i| i+1 ).unwrap_or(0);
+    if let Some(before_start) = timeline.change_before(t_from) {
+        current_v = timeline.history[before_start].new_value.clone();
+    }
+    let change_from = timeline.change_after(t_from);
+    let change_to   = timeline.change_after(t_to  );
+
+    // eprintln!("format_time_series: change_from = {:?}, to = {:?}", change_from, change_to);
 
     let mut spans = Vec::new();
     spans.push(Span::styled(name, Style::new().fg(Color::White).bg(Color::Black)));
@@ -29,110 +35,114 @@ fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t
 
     let mut currently_bad = false;
 
-    for i in change_from..change_to {
-        let change = &timeline.history[i];
-        // print the current value
-        for t in current_t..change.time {
-            let (mut txt, sty) = match current_v {
-                Value::Bits(bits) => {
-                    match bits {
-                        Bits::B(x) => {
-                            currently_bad = false;
-                            if x {
-                                ("▔▔▔▔".to_string(), style_bit)
-                            } else {
-                                ("▁▁▁▁".to_string(), style_bit)
+    if let Some(change_from) = change_from {
+        let change_to = change_to.unwrap_or(timeline.history.len().saturating_sub(1));
+
+        for i in change_from..change_to {
+            let change = &timeline.history[i];
+            // print the current value
+            for t in current_t..change.time {
+                let (mut txt, sty) = match current_v {
+                    Value::Bits(bits) => {
+                        match bits {
+                            Bits::B(x) => {
+                                currently_bad = false;
+                                if x {
+                                    ("▔▔▔▔".to_string(), style_bit)
+                                } else {
+                                    ("▁▁▁▁".to_string(), style_bit)
+                                }
                             }
-                        }
-                        Bits::V(x) => {
-                            currently_bad = false;
-                            (format!("{:<4x}", x.value), style_var)
-                        }
-                        Bits::X => {
-                            currently_bad = true;
-                            (" X  ".to_string(), style_bad)
-                        }
-                        Bits::Z => {
-                            currently_bad = true;
-                            (" Z  ".to_string(), style_bad)
-                        }
-                    }
-                }
-                Value::Real(x) => {
-                    currently_bad = false;
-                    (format!("{:<4}", x), style_var)
-                }
-                Value::String(ref x) => {
-                    currently_bad = false;
-                    (format!("{:<4}", x), style_var)
-                }
-            };
-            if t+1 == change.time {
-                txt.pop();
-                txt.pop();
-            }
-            spans.push(Span::styled(txt, sty));
-        }
-        if i != 0 {
-            match change.new_value {
-                Value::Bits(bits) => {
-                    match bits {
-                        Bits::B(x) => {
-                            if x {
-                                spans.push(Span::styled("▁".to_string(), style_bit));
-                            } else {
-                                spans.push(Span::styled("▁".to_string(), style_bit));
+                            Bits::V(x) => {
+                                currently_bad = false;
+                                (format!("{:<4x}", x.value), style_var)
                             }
-                        }
-                        Bits::V(_) => {
-                            spans.push(Span::styled("".to_string(),
-                                Style::new().fg(Color::LightGreen).bg(Color::Black)
-                            ));
-                        }
-                        Bits::X => {
-                            if currently_bad {
-                                spans.push(Span::styled("".to_string(),
-                                    Style::new().fg(Color::LightRed).bg(Color::Black)
-                                ));
-                            } else {
-                                spans.push(Span::styled("".to_string(),
-                                    Style::new().fg(Color::LightGreen).bg(Color::Black)
-                                ));
-                                spans.push(Span::styled("".to_string(),
-                                    Style::new().fg(Color::LightRed).bg(Color::Black)
-                                ));
+                            Bits::X => {
+                                currently_bad = true;
+                                (" X  ".to_string(), style_bad)
                             }
-                        }
-                        Bits::Z => {
-                            if currently_bad {
-                                spans.push(Span::styled("".to_string(),
-                                    Style::new().fg(Color::LightRed).bg(Color::Black)
-                                ));
-                            } else {
-                                spans.push(Span::styled("".to_string(),
-                                    Style::new().fg(Color::LightGreen).bg(Color::Black)
-                                ));
-                                spans.push(Span::styled("".to_string(),
-                                    Style::new().fg(Color::LightRed).bg(Color::Black)
-                                ));
+                            Bits::Z => {
+                                currently_bad = true;
+                                (" Z  ".to_string(), style_bad)
                             }
                         }
                     }
+                    Value::Real(x) => {
+                        currently_bad = false;
+                        (format!("{:<4}", x), style_var)
+                    }
+                    Value::String(ref x) => {
+                        currently_bad = false;
+                        (format!("{:<4}", x), style_var)
+                    }
+                };
+                if t+1 == change.time {
+                    txt.pop();
+                    txt.pop();
                 }
-                Value::Real(_) => {
-                    spans.push(Span::styled("".to_string(),
-                        Style::new().fg(Color::LightRed).bg(Color::Black)
-                    ));
-                }
-                Value::String(_) => {
-                    spans.push(Span::styled("".to_string(),
-                        Style::new().fg(Color::LightRed).bg(Color::Black)
-                    ));
-                }
+                spans.push(Span::styled(txt, sty));
             }
+            // if i != change_from {
+                match change.new_value {
+                    Value::Bits(bits) => {
+                        match bits {
+                            Bits::B(x) => {
+                                if x {
+                                    spans.push(Span::styled("▁".to_string(), style_bit));
+                                } else {
+                                    spans.push(Span::styled("▁".to_string(), style_bit));
+                                }
+                            }
+                            Bits::V(_) => {
+                                spans.push(Span::styled("".to_string(),
+                                    Style::new().fg(Color::LightGreen).bg(Color::Black)
+                                ));
+                            }
+                            Bits::X => {
+                                if currently_bad {
+                                    spans.push(Span::styled("".to_string(),
+                                        Style::new().fg(Color::LightRed).bg(Color::Black)
+                                    ));
+                                } else {
+                                    spans.push(Span::styled("".to_string(),
+                                        Style::new().fg(Color::LightGreen).bg(Color::Black)
+                                    ));
+                                    spans.push(Span::styled("".to_string(),
+                                        Style::new().fg(Color::LightRed).bg(Color::Black)
+                                    ));
+                                }
+                            }
+                            Bits::Z => {
+                                if currently_bad {
+                                    spans.push(Span::styled("".to_string(),
+                                        Style::new().fg(Color::LightRed).bg(Color::Black)
+                                    ));
+                                } else {
+                                    spans.push(Span::styled("".to_string(),
+                                        Style::new().fg(Color::LightGreen).bg(Color::Black)
+                                    ));
+                                    spans.push(Span::styled("".to_string(),
+                                        Style::new().fg(Color::LightRed).bg(Color::Black)
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                    Value::Real(_) => {
+                        spans.push(Span::styled("".to_string(),
+                            Style::new().fg(Color::LightRed).bg(Color::Black)
+                        ));
+                    }
+                    Value::String(_) => {
+                        spans.push(Span::styled("".to_string(),
+                            Style::new().fg(Color::LightRed).bg(Color::Black)
+                        ));
+                    }
+                }
+            // }
+            current_v = change.new_value.clone();
+            current_t = change.time;
         }
-        current_v = change.new_value.clone();
-        current_t = change.time;
     }
 
     for _ in current_t..t_to {
