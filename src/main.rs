@@ -11,13 +11,10 @@ fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64) -> S
     let mut t = 0;
     let mut v = Value::Bits(Bits::Z);
 
-    let change_from  = timeline.index_at(t_from).unwrap_or(0);
-    let change_until = timeline.index_at(t_to).unwrap_or(0);
+    let change_from = timeline.index_at(t_from).unwrap_or(0);
+    let change_to   = timeline.index_at(t_to).map(|i| i+1 ).unwrap_or(0);
 
-    // for (i, change) in timeline.history.iter().enumerate() {
-        // println!("change = {:?}", change);
-
-    for i in change_from..=change_until {
+    for i in change_from..change_to {
         let change = &timeline.history[i];
         // print the current value
         for _ in t..change.time {
