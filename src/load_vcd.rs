@@ -38,6 +38,25 @@ pub fn append_to_scope(scope: &mut Scope, values: &mut Vec<ValueChangeStream>, i
             }
         }
     }
+
+    scope.items.sort_by(|lhs, rhs| {
+        match lhs {
+            ScopeItem::Scope(s1) => {
+                if let ScopeItem::Scope(s2) = rhs {
+                    s1.name.cmp(&s2.name)
+                } else {
+                    std::cmp::Ordering::Greater // value < scope
+                }
+            }
+            ScopeItem::Value(v1) => {
+                if let ScopeItem::Value(v2) = rhs {
+                    v1.name.cmp(&v2.name)
+                } else {
+                    std::cmp::Ordering::Less
+                }
+            }
+        }
+    });
     map
 }
 
