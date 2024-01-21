@@ -30,7 +30,7 @@ pub fn append_to_scope(scope: &mut Scope, values: &mut Vec<ValueChangeStream>, i
 
                 scope.items.push(ScopeItem::Scope(subscope));
             }
-            vcd::ScopeItem::Var(v) => {
+            vcd::ScopeItem::Var(_) => {
                 // already did
             }
             _ => {
@@ -58,29 +58,39 @@ pub fn load_vcd<R: std::io::BufRead>(src: R) -> std::io::Result<TimeSeries> {
 
     for cmd in parser {
         let cmd = cmd?;
-        match cmd {
+
+        if let Some((idx, v)) = match cmd {
             vcd::Command::Timestamp(t) => {
                 current_t = t;
+                None
             }
             vcd::Command::ChangeScalar(i, v) => {
                 let idx = map.get(&i).unwrap();
-                ts.values[*idx].history.push(ValueChange::new(current_t, Value::Bits(Bits::from_vcd_scalar(v))));
+                Some((*idx, Value::Bits(Bits::from_vcd_scalar(v))))
             }
             vcd::Command::ChangeVector(i, v) => {
                 let idx = map.get(&i).unwrap();
-                ts.values[*idx].history.push(ValueChange::new(current_t, Value::Bits(Bits::from_vcd_vector(v))));
+                Some((*idx, Value::Bits(Bits::from_vcd_vector(v))))
             }
             vcd::Command::ChangeReal(i, v) => {
                 let idx = map.get(&i).unwrap();
-                ts.values[*idx].history.push(ValueChange::new(current_t, Value::Real(v)));
+                Some((*idx, Value::Real(v)))
             }
             vcd::Command::ChangeString(i, v) => {
                 let idx = map.get(&i).unwrap();
-                ts.values[*idx].history.push(ValueChange::new(current_t, Value::String(v)));
+                Some((*idx, Value::String(v)))
             }
             _ => {
                 println!("not supported command: {:?}", cmd);
+                None
             }
+        } {
+            if let Some(last) = ts.values[idx].history.last() {
+                if last.time == current_t {
+                    ts.values[idx].history.pop();
+                }
+            }
+            ts.values[idx].history.push(ValueChange::new(current_t, v));
         }
     }
     Ok(ts)
