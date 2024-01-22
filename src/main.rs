@@ -33,13 +33,11 @@ fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t
     let style_var = Style::new().fg(Color::Black).bg(Color::LightGreen);
     let style_bad = Style::new().fg(Color::Black).bg(Color::LightRed);
 
-    let mut currently_bad = false;
-
     if let Some(change_from) = change_from {
         let change_to = change_to.unwrap_or(timeline.history.len().saturating_sub(1));
 
         for i in change_from..change_to {
-            currently_bad = false; // Z or X
+            let mut currently_bad = false; // Z or X
 
             let change = &timeline.history[i];
 
