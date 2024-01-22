@@ -137,25 +137,26 @@ fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t
         }
     }
 
-    for _ in current_t..t_to {
+    if current_t < t_to {
+        let dt = (t_to - current_t) as usize;
         let (txt, sty) = match current_v {
             Value::Bits(bits) => {
                 match bits {
                     Bits::B(x) => {
                         if x {
-                            ("▔▔▔▔".to_string(), style_bit)
+                            ("▔".repeat(4 * dt), style_bit)
                         } else {
-                            ("▁▁▁▁".to_string(), style_bit)
+                            ("▁".repeat(4 * dt), style_bit)
                         }
                     }
                     Bits::V(x) => {
-                        (format!("{:<4x}", x.value), style_var)
+                        (format!("{:<width$x}", x.value, width=4*dt), style_var)
                     }
                     Bits::X => {
-                        (" X  ".to_string(), style_bad)
+                        (format!("{:<width$}", "X", width=4*dt), style_bad)
                     }
                     Bits::Z => {
-                        (" Z  ".to_string(), style_bad)
+                        (format!("{:<width$}", "Z", width=4*dt), style_bad)
                     }
                 }
             }
