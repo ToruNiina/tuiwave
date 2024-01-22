@@ -203,30 +203,6 @@ fn show_values<'a>(ts: &'a TimeSeries, s: &'a Scope, t_from: u64, t_to: u64) -> 
     lines
 }
 
-// fn print_values(ts: &TimeSeries, s: &Scope, t_from: u64, t_to: u64) {
-//     println!("scope {}", s.name);
-//     for item in s.items.iter() {
-//         match item {
-//             ScopeItem::Value(v) => {
-//                 println!("{:20}:{}", v.name, format_time_series(&ts.values[v.index], t_from, t_to));
-//             }
-//             ScopeItem::Scope(_) => {
-//                 // do nothing
-//             }
-//         }
-//     }
-//     for item in s.items.iter() {
-//         match item {
-//             ScopeItem::Value(_) => {
-//                 // do nothing
-//             }
-//             ScopeItem::Scope(subscope) => {
-//                 print_values(ts, subscope, t_from, t_to);
-//             }
-//         }
-//     }
-// }
-
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
