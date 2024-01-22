@@ -260,7 +260,7 @@ fn main() {
         terminal.draw(|frame| {
             let area = frame.size();
             frame.render_widget(
-                ratatui::widgets::Paragraph::new(show_values(&ts, &ts.scope, t_from, t_to)),
+                ratatui::widgets::Paragraph::new(show_values(&ts, &ts.scope, t_from, t_to.min(t_last+1))),
                 area,
             );
         }).unwrap();
