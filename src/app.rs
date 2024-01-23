@@ -26,7 +26,7 @@ impl TuiWave {
     }
 }
 
-fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t_to: u64) -> Line {
+fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t_to: u64, res: u64) -> Line {
 
     let mut current_t = t_from;
     let mut current_v = Value::Bits(Bits::Z);
@@ -54,7 +54,8 @@ fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t
 
             let change = &timeline.history[i];
 
-            let dt = (change.time - current_t) as usize;
+            let dt = (change.time - current_t) / res;
+            let dt = dt.max(1) as usize;
             assert!(0 != dt);
 
             let (txt, sty) = match current_v {
@@ -151,7 +152,9 @@ fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t
     }
 
     if current_t < t_to {
-        let dt = (t_to - current_t) as usize;
+        let dt = (t_to - current_t) / res;
+        let dt = dt.max(1) as usize;
+
         let (txt, sty) = match current_v {
             Value::Bits(bits) => {
                 match bits {
@@ -196,7 +199,8 @@ pub fn show_values<'a>(app: &'a TuiWave, s: &'a Scope) -> Vec<Line<'a>> {
                     format!("{:20}", v.name),
                     &app.ts.values[v.index],
                     app.t_from,
-                    app.t_to.min(app.t_last+1)
+                    app.t_to.min(app.t_last+1),
+                    app.resolution
                 ));
             }
             ScopeItem::Scope(_) => {
