@@ -203,15 +203,15 @@ fn show_values<'a>(ts: &'a TimeSeries, s: &'a Scope, t_from: u64, t_to: u64) -> 
     lines
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
         println!("usage: ./tuiwave [filename.vcd]");
-        return;
+        return Ok(());
     }
 
-    let f = std::fs::File::open(&args[1]).unwrap();
-    let ts = load_vcd(std::io::BufReader::new(f)).unwrap();
+    let f = std::fs::File::open(&args[1])?;
+    let ts = load_vcd(std::io::BufReader::new(f))?;
 
     let mut t_last = 0;
     for vs in ts.values.iter() {
@@ -223,11 +223,11 @@ fn main() {
     }
     // print_values(&ts, &ts.scope, 0, t_last + 1);
 
-    std::io::stdout().execute(crossterm::terminal::EnterAlternateScreen).unwrap();
-    crossterm::terminal::enable_raw_mode().unwrap();
+    std::io::stdout().execute(crossterm::terminal::EnterAlternateScreen)?;
+    crossterm::terminal::enable_raw_mode()?;
     let mut terminal = ratatui::terminal::Terminal::new(
-        ratatui::backend::CrosstermBackend::new(std::io::stdout())).unwrap();
-    terminal.clear().unwrap();
+        ratatui::backend::CrosstermBackend::new(std::io::stdout()))?;
+    terminal.clear()?;
 
     let mut resolution = 1;
     let mut t_from = 0;
@@ -240,7 +240,7 @@ fn main() {
                 ratatui::widgets::Paragraph::new(show_values(&ts, &ts.scope, t_from, t_to.min(t_last+1))),
                 area,
             );
-        }).unwrap();
+        })?;
 
         if crossterm::event::poll(std::time::Duration::from_millis(16)).unwrap() {
             if let Event::Key(key) = crossterm::event::read().unwrap() {
@@ -267,8 +267,8 @@ fn main() {
         }
     }
 
-    std::io::stdout().execute(crossterm::terminal::LeaveAlternateScreen).unwrap();
-    crossterm::terminal::disable_raw_mode().unwrap();
+    std::io::stdout().execute(crossterm::terminal::LeaveAlternateScreen)?;
+    crossterm::terminal::disable_raw_mode()?;
 
-    return ;
+    return Ok(());
 }
