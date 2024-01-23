@@ -1,5 +1,7 @@
 use crate::timeseries::*;
 
+use anyhow::Context;
+
 use std::collections::*;
 
 pub fn append_to_scope(scope: &mut Scope, values: &mut Vec<ValueChangeStream>, items: &Vec<vcd::ScopeItem>) -> HashMap<vcd::IdCode, usize> {
@@ -84,19 +86,19 @@ pub fn load_vcd<R: std::io::BufRead>(src: R) -> anyhow::Result<TimeSeries> {
                 None
             }
             vcd::Command::ChangeScalar(i, v) => {
-                let idx = map.get(&i).ok_or(anyhow::anyhow!("ID {} NotFound", i))?;
+                let idx = map.get(&i).with_context(|| format!("ID {} NotFound", i))?;
                 Some((*idx, Value::Bits(Bits::from_vcd_scalar(v))))
             }
             vcd::Command::ChangeVector(i, v) => {
-                let idx = map.get(&i).ok_or(anyhow::anyhow!("ID {} NotFound", i))?;
+                let idx = map.get(&i).with_context(|| format!("ID {} NotFound", i))?;
                 Some((*idx, Value::Bits(Bits::from_vcd_vector(v))))
             }
             vcd::Command::ChangeReal(i, v) => {
-                let idx = map.get(&i).ok_or(anyhow::anyhow!("ID {} NotFound", i))?;
+                let idx = map.get(&i).with_context(|| format!("ID {} NotFound", i))?;
                 Some((*idx, Value::Real(v)))
             }
             vcd::Command::ChangeString(i, v) => {
-                let idx = map.get(&i).ok_or(anyhow::anyhow!("ID {} NotFound", i))?;
+                let idx = map.get(&i).with_context(|| format!("ID {} NotFound", i))?;
                 Some((*idx, Value::String(v)))
             }
             _ => {
