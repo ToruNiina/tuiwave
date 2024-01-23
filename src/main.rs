@@ -13,6 +13,19 @@ use ratatui::text::{Line, Span};
 
 use std::env;
 
+struct TuiWave {
+    pub t_from: u64,
+    pub t_to:   u64,
+    pub t_last: u64,
+    pub resolution: u64,
+}
+
+impl TuiWave {
+    fn new(t_from: u64, t_to: u64, t_last: u64, resolution: u64) -> Self {
+        TuiWave{ t_from, t_to, t_last, resolution }
+    }
+}
+
 fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t_to: u64) -> Line {
 
     let mut current_t = t_from;
@@ -172,7 +185,7 @@ fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t
     ratatui::text::Line::from(spans)
 }
 
-fn show_values<'a>(ts: &'a TimeSeries, s: &'a Scope, t_from: u64, t_to: u64) -> Vec<Line<'a>> {
+fn show_values<'a>(ts: &'a TimeSeries, s: &'a Scope, app: &TuiWave) -> Vec<Line<'a>> {
     let mut lines = Vec::new();
 
     for item in s.items.iter() {
@@ -181,7 +194,7 @@ fn show_values<'a>(ts: &'a TimeSeries, s: &'a Scope, t_from: u64, t_to: u64) -> 
                 lines.push(Line::from(""));
                 lines.push(format_time_series(
                     format!("{:20}", v.name),
-                    &ts.values[v.index], t_from, t_to
+                    &ts.values[v.index], app.t_from, app.t_to.min(app.t_last+1)
                 ));
             }
             ScopeItem::Scope(_) => {
@@ -195,12 +208,24 @@ fn show_values<'a>(ts: &'a TimeSeries, s: &'a Scope, t_from: u64, t_to: u64) -> 
                 // do nothing
             }
             ScopeItem::Scope(subscope) => {
-                let ls = show_values(ts, subscope, t_from, t_to);
+                let ls = show_values(ts, subscope, app);
                 lines.extend(ls.into_iter());
             }
         }
     }
     lines
+}
+
+fn startup() -> anyhow::Result<()> {
+    std::io::stdout().execute(crossterm::terminal::EnterAlternateScreen)?;
+    crossterm::terminal::enable_raw_mode()?;
+    Ok(())
+}
+
+fn shutdown() -> anyhow::Result<()> {
+    std::io::stdout().execute(crossterm::terminal::LeaveAlternateScreen)?;
+    crossterm::terminal::disable_raw_mode()?;
+    Ok(())
 }
 
 fn main() -> anyhow::Result<()> {
@@ -223,21 +248,19 @@ fn main() -> anyhow::Result<()> {
     }
     // print_values(&ts, &ts.scope, 0, t_last + 1);
 
-    std::io::stdout().execute(crossterm::terminal::EnterAlternateScreen)?;
-    crossterm::terminal::enable_raw_mode()?;
+    startup()?;
+
     let mut terminal = ratatui::terminal::Terminal::new(
         ratatui::backend::CrosstermBackend::new(std::io::stdout()))?;
     terminal.clear()?;
 
-    let mut resolution = 1;
-    let mut t_from = 0;
-    let mut t_to = t_last+1;
+    let mut app = TuiWave::new(0, t_last+1, t_last, 1);
 
     loop {
         terminal.draw(|frame| {
             let area = frame.size();
             frame.render_widget(
-                ratatui::widgets::Paragraph::new(show_values(&ts, &ts.scope, t_from, t_to.min(t_last+1))),
+                ratatui::widgets::Paragraph::new(show_values(&ts, &ts.scope, &app)),
                 area,
             );
         })?;
@@ -248,18 +271,18 @@ fn main() -> anyhow::Result<()> {
                     if key.code == KeyCode::Char('q') {
                         break;
                     } else if key.code == KeyCode::Char('l') || key.code == KeyCode::Right {
-                        t_from = t_from.saturating_add(resolution);
-                        t_to   = t_to  .saturating_add(resolution);
+                        app.t_from = app.t_from.saturating_add(app.resolution);
+                        app.t_to   = app.t_to  .saturating_add(app.resolution);
                     } else if key.code == KeyCode::Char('h') || key.code == KeyCode::Left {
-                        if t_from != 0 {
-                            t_from = t_from.saturating_sub(resolution);
-                            t_to   = t_to  .saturating_sub(resolution);
+                        if app.t_from != 0 {
+                            app.t_from = app.t_from.saturating_sub(app.resolution);
+                            app.t_to   = app.t_to  .saturating_sub(app.resolution);
                         }
                     } else if key.code == KeyCode::Char('+') {
-                        resolution += 1;
+                        app.resolution += 1;
                     } else if key.code == KeyCode::Char('-') {
-                        if 1 < resolution {
-                            resolution -= 1;
+                        if 1 < app.resolution {
+                            app.resolution -= 1;
                         }
                     }
                 }
@@ -267,8 +290,7 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    std::io::stdout().execute(crossterm::terminal::LeaveAlternateScreen)?;
-    crossterm::terminal::disable_raw_mode()?;
+    shutdown()?;
 
     return Ok(());
 }
