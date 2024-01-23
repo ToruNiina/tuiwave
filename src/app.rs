@@ -94,9 +94,9 @@ fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t
                     match bits {
                         Bits::B(x) => {
                             if x {
-                                spans.push(Span::styled("▁".to_string(), style_bit));
+                                spans.push(Span::styled("／".to_string(), style_bit));
                             } else {
-                                spans.push(Span::styled("▁".to_string(), style_bit));
+                                spans.push(Span::styled("＼".to_string(), style_bit));
                             }
                         }
                         Bits::V(_) => {
