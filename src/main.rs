@@ -13,26 +13,6 @@ use ratatui::text::{Line, Span};
 
 use std::env;
 
-#[derive(Debug, Clone)]
-struct RuntimeError {
-    msg: std::string::String,
-}
-impl RuntimeError {
-    fn new(msg: String) -> Self {
-        RuntimeError{msg}
-    }
-}
-impl std::fmt::Display for RuntimeError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "RuntimeError: msg = {}", self.msg)
-    }
-}
-impl std::error::Error for RuntimeError {
-    fn description(&self) -> &str {
-        &self.msg
-    }
-}
-
 fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t_to: u64) -> Line {
 
     let mut current_t = t_from;
@@ -227,7 +207,7 @@ fn main() -> anyhow::Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
         println!("usage: ./tuiwave [filename.vcd]");
-        return Ok(());
+        return Err(anyhow::anyhow!("missing file"));
     }
 
     let f = std::fs::File::open(&args[1])?;
