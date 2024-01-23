@@ -27,12 +27,12 @@ fn update(app: &mut TuiWave) -> anyhow::Result<()> {
                 if key.code == KeyCode::Char('q') {
                     app.should_quit = true;
                 } else if key.code == KeyCode::Char('l') || key.code == KeyCode::Right {
-                    app.t_from = app.t_from.saturating_add(app.resolution);
-                    app.t_to   = app.t_to  .saturating_add(app.resolution);
+                    app.t_from = app.t_from.saturating_add(1);
+                    app.t_to   = app.t_to  .saturating_add(1);
                 } else if key.code == KeyCode::Char('h') || key.code == KeyCode::Left {
                     if app.t_from != 0 {
-                        app.t_from = app.t_from.saturating_sub(app.resolution);
-                        app.t_to   = app.t_to  .saturating_sub(app.resolution);
+                        app.t_from = app.t_from.saturating_sub(1);
+                        app.t_to   = app.t_to  .saturating_sub(1);
                     }
                 } else if key.code == KeyCode::Char('+') {
                     app.resolution += 1;
