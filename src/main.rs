@@ -262,8 +262,8 @@ fn main() -> anyhow::Result<()> {
             );
         })?;
 
-        if crossterm::event::poll(std::time::Duration::from_millis(16)).unwrap() {
-            if let Event::Key(key) = crossterm::event::read().unwrap() {
+        if crossterm::event::poll(std::time::Duration::from_millis(16))? {
+            if let Event::Key(key) = crossterm::event::read()? {
                 if key.kind == KeyEventKind::Press {
                     if key.code == KeyCode::Char('q') {
                         break;
