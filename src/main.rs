@@ -10,19 +10,30 @@ use crossterm::event::{
 };
 use ratatui::style::{Style, Color};
 use ratatui::text::{Line, Span};
+use ratatui::terminal::Frame;
 
 use std::env;
 
 struct TuiWave {
+    pub ts: TimeSeries,
     pub t_from: u64,
     pub t_to:   u64,
     pub t_last: u64,
     pub resolution: u64,
+    pub should_quit: bool,
 }
 
 impl TuiWave {
-    fn new(t_from: u64, t_to: u64, t_last: u64, resolution: u64) -> Self {
-        TuiWave{ t_from, t_to, t_last, resolution }
+    fn new(ts: TimeSeries) -> Self {
+        let mut t_last = 0;
+        for vs in ts.values.iter() {
+            for change in vs.history.iter() {
+                if t_last < change.time {
+                    t_last = change.time;
+                }
+            }
+        }
+        Self{ ts, t_from: 0, t_to: t_last+1, t_last, resolution: 1, should_quit: false}
     }
 }
 
@@ -185,7 +196,7 @@ fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t
     ratatui::text::Line::from(spans)
 }
 
-fn show_values<'a>(ts: &'a TimeSeries, s: &'a Scope, app: &TuiWave) -> Vec<Line<'a>> {
+fn show_values<'a>(app: &'a TuiWave, s: &'a Scope) -> Vec<Line<'a>> {
     let mut lines = Vec::new();
 
     for item in s.items.iter() {
@@ -194,7 +205,9 @@ fn show_values<'a>(ts: &'a TimeSeries, s: &'a Scope, app: &TuiWave) -> Vec<Line<
                 lines.push(Line::from(""));
                 lines.push(format_time_series(
                     format!("{:20}", v.name),
-                    &ts.values[v.index], app.t_from, app.t_to.min(app.t_last+1)
+                    &app.ts.values[v.index],
+                    app.t_from,
+                    app.t_to.min(app.t_last+1)
                 ));
             }
             ScopeItem::Scope(_) => {
@@ -208,12 +221,47 @@ fn show_values<'a>(ts: &'a TimeSeries, s: &'a Scope, app: &TuiWave) -> Vec<Line<
                 // do nothing
             }
             ScopeItem::Scope(subscope) => {
-                let ls = show_values(ts, subscope, app);
+                let ls = show_values(app, subscope);
                 lines.extend(ls.into_iter());
             }
         }
     }
     lines
+}
+
+fn draw_ui(app: &TuiWave, f: &mut Frame) {
+    let area = f.size();
+    f.render_widget(
+        ratatui::widgets::Paragraph::new(show_values(&app, &app.ts.scope)),
+        area,
+    );
+}
+
+fn update(app: &mut TuiWave) -> anyhow::Result<()> {
+    if crossterm::event::poll(std::time::Duration::from_millis(16))? {
+        if let Event::Key(key) = crossterm::event::read()? {
+            if key.kind == KeyEventKind::Press {
+                if key.code == KeyCode::Char('q') {
+                    app.should_quit = true;
+                } else if key.code == KeyCode::Char('l') || key.code == KeyCode::Right {
+                    app.t_from = app.t_from.saturating_add(app.resolution);
+                    app.t_to   = app.t_to  .saturating_add(app.resolution);
+                } else if key.code == KeyCode::Char('h') || key.code == KeyCode::Left {
+                    if app.t_from != 0 {
+                        app.t_from = app.t_from.saturating_sub(app.resolution);
+                        app.t_to   = app.t_to  .saturating_sub(app.resolution);
+                    }
+                } else if key.code == KeyCode::Char('+') {
+                    app.resolution += 1;
+                } else if key.code == KeyCode::Char('-') {
+                    if 1 < app.resolution {
+                        app.resolution -= 1;
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 fn startup() -> anyhow::Result<()> {
@@ -238,14 +286,6 @@ fn main() -> anyhow::Result<()> {
     let f = std::fs::File::open(&args[1])?;
     let ts = load_vcd(std::io::BufReader::new(f))?;
 
-    let mut t_last = 0;
-    for vs in ts.values.iter() {
-        for change in vs.history.iter() {
-            if t_last < change.time {
-                t_last = change.time;
-            }
-        }
-    }
     // print_values(&ts, &ts.scope, 0, t_last + 1);
 
     startup()?;
@@ -254,39 +294,15 @@ fn main() -> anyhow::Result<()> {
         ratatui::backend::CrosstermBackend::new(std::io::stdout()))?;
     terminal.clear()?;
 
-    let mut app = TuiWave::new(0, t_last+1, t_last, 1);
+    let mut app = TuiWave::new(ts);
 
     loop {
-        terminal.draw(|frame| {
-            let area = frame.size();
-            frame.render_widget(
-                ratatui::widgets::Paragraph::new(show_values(&ts, &ts.scope, &app)),
-                area,
-            );
-        })?;
+        update(&mut app)?;
 
-        if crossterm::event::poll(std::time::Duration::from_millis(16))? {
-            if let Event::Key(key) = crossterm::event::read()? {
-                if key.kind == KeyEventKind::Press {
-                    if key.code == KeyCode::Char('q') {
-                        break;
-                    } else if key.code == KeyCode::Char('l') || key.code == KeyCode::Right {
-                        app.t_from = app.t_from.saturating_add(app.resolution);
-                        app.t_to   = app.t_to  .saturating_add(app.resolution);
-                    } else if key.code == KeyCode::Char('h') || key.code == KeyCode::Left {
-                        if app.t_from != 0 {
-                            app.t_from = app.t_from.saturating_sub(app.resolution);
-                            app.t_to   = app.t_to  .saturating_sub(app.resolution);
-                        }
-                    } else if key.code == KeyCode::Char('+') {
-                        app.resolution += 1;
-                    } else if key.code == KeyCode::Char('-') {
-                        if 1 < app.resolution {
-                            app.resolution -= 1;
-                        }
-                    }
-                }
-            }
+        terminal.draw(|frame| { draw_ui(&app, frame) })?;
+
+        if app.should_quit {
+            break;
         }
     }
 
