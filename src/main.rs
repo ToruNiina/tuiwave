@@ -35,11 +35,9 @@ fn update(app: &mut TuiWave) -> anyhow::Result<()> {
                         app.t_to   = app.t_to  .saturating_sub(1);
                     }
                 } else if key.code == KeyCode::Char('+') {
-                    app.resolution += 1;
+                    app.width = app.width.saturating_sub(1).max(2);
                 } else if key.code == KeyCode::Char('-') {
-                    if 1 < app.resolution {
-                        app.resolution -= 1;
-                    }
+                    app.width = app.width.saturating_add(1).max(2);
                 }
             }
         }
@@ -68,17 +66,13 @@ fn main() -> anyhow::Result<()> {
 
     let f = std::fs::File::open(&args[1])?;
     let ts = load_vcd::load_vcd(std::io::BufReader::new(f))?;
-
-    // print_values(&ts, &ts.scope, 0, t_last + 1);
+    let mut app = TuiWave::new(ts);
 
     startup()?;
 
     let mut terminal = ratatui::terminal::Terminal::new(
         ratatui::backend::CrosstermBackend::new(std::io::stdout()))?;
     terminal.clear()?;
-
-    let mut app = TuiWave::new(ts);
-
     loop {
         update(&mut app)?;
 
