@@ -34,9 +34,9 @@ fn update(app: &mut TuiWave) -> anyhow::Result<()> {
                         app.t_from = app.t_from.saturating_sub(1);
                         app.t_to   = app.t_to  .saturating_sub(1);
                     }
-                } else if key.code == KeyCode::Char('+') {
-                    app.width = app.width.saturating_sub(1).max(2);
                 } else if key.code == KeyCode::Char('-') {
+                    app.width = app.width.saturating_sub(1).max(2);
+                } else if key.code == KeyCode::Char('+') {
                     app.width = app.width.saturating_add(1).max(2);
                 }
             }
