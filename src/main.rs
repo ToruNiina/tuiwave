@@ -21,7 +21,7 @@ fn draw_ui(app: &app::TuiWave, f: &mut Frame) {
 }
 
 fn update(app: &mut TuiWave) -> anyhow::Result<()> {
-    if crossterm::event::poll(std::time::Duration::from_millis(16))? {
+    if crossterm::event::poll(std::time::Duration::from_millis(250))? {
         if let Event::Key(key) = crossterm::event::read()? {
             if key.kind == KeyEventKind::Press {
                 if key.code == KeyCode::Char('q') {
