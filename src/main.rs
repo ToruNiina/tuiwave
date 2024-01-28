@@ -33,23 +33,49 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
         .constraints(constraints) // Constraint::from_lengths(std::iter::repeat(2).take(n_lines)))
         .split(frame.size());
 
+    // we have 3 kinds of borders for the first, the last, and the other blocks.
+    //
+    //   .---------- -------------.
+    //   | 1st path  | 1st signal |
+    //   |---------- +------------|
+    //
+    //   | 2nd path  | 2nd signal |
+    //   |---------- +------------|
+    //
+    //   | Nth path  | Nth signal |
+    //   '---------- -------------'
+    //
+
+    let first_path_borders = Borders::TOP | Borders::BOTTOM | Borders::LEFT;
+    let first_sign_borders = Borders::ALL;
+
+    let default_path_borders = Borders::BOTTOM | Borders::LEFT;
+    let default_sign_borders = Borders::BOTTOM | Borders::LEFT | Borders::RIGHT;
+
+    let default_path_set = symbols::border::Set {
+        bottom_left: symbols::line::NORMAL.vertical_right,
+        .. symbols::border::PLAIN
+    };
+    let default_sign_set = symbols::border::Set {
+        top_left: symbols::line::NORMAL.horizontal_down,
+        bottom_left: symbols::line::NORMAL.cross,
+        bottom_right: symbols::line::NORMAL.vertical_left,
+        .. symbols::border::PLAIN
+    };
+
+    let last_path_set = symbols::border::Set {
+        .. symbols::border::PLAIN
+    };
+    let last_sign_set = symbols::border::Set {
+        top_left: symbols::line::NORMAL.horizontal_down,
+        bottom_left: symbols::line::NORMAL.horizontal_up,
+        .. symbols::border::PLAIN
+    };
+
     for i in 0..n_lines {
 
-        let border_set = if i+1 == n_lines || i+1 == lines.len() {
-            symbols::border::Set{..symbols::border::PLAIN}
-        } else {
-            symbols::border::Set {
-                bottom_left: symbols::line::NORMAL.vertical_right, // |-
-                bottom_right: symbols::line::NORMAL.vertical_left, // -|
-                .. symbols::border::PLAIN
-            }
-        };
-
-        let borders = if i == 0 {
-            Borders::ALL
-        } else {
-            Borders::BOTTOM | Borders::LEFT | Borders::RIGHT
-        };
+        let is_first = i == 0;
+        let is_last = i+1 == n_lines || i+1 == lines.len();
 
         if i < lines.len() {
             let (path, line) = &lines[i];
@@ -62,13 +88,16 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
             let mut fullpath = String::new();
             for e in path.into_iter() {
                 fullpath += e;
+                fullpath += ".";
             }
+            fullpath.pop();
+
             frame.render_widget(
                 Paragraph::new(fullpath)
                     .block(
                         Block::new()
-                        .borders(borders)
-                        .border_set(border_set)
+                        .borders(if is_first {first_path_borders} else {default_path_borders})
+                        .border_set(if is_last {last_path_set} else {default_path_set})
                         .border_style(Style::new().fg(Color::DarkGray))
                     ),
                 sublayout[0]
@@ -78,8 +107,8 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
                 Paragraph::new(line.clone())
                     .block(
                         Block::new()
-                            .borders(borders)
-                            .border_set(border_set)
+                            .borders(if is_first {first_sign_borders} else {default_sign_borders})
+                            .border_set(if is_last {last_sign_set} else {default_sign_set})
                             .border_style(Style::new().fg(Color::DarkGray))
                     ),
                 sublayout[1]
