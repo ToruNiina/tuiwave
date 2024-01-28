@@ -74,10 +74,10 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
 
     for i in 0..n_lines {
 
-        let is_first = i == 0;
-        let is_last = i+1 == n_lines || i+1 == lines.len();
-
         let idx = i + app.line_from as usize;
+
+        let is_first = i == 0;
+        let is_last = i+1 == n_lines || idx+1 == lines.len();
 
         if idx < lines.len() {
             let (path, line) = &lines[idx];
