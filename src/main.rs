@@ -9,15 +9,46 @@ use crossterm::event::{
     Event, KeyEventKind, KeyCode
 };
 use ratatui::terminal::Frame;
+use ratatui::layout::{Layout, Constraint, Direction};
+use ratatui::widgets::{Block, Borders, Paragraph};
 
 use std::env;
 
-fn draw_ui(app: &app::TuiWave, f: &mut Frame) {
-    let area = f.size();
-    f.render_widget(
-        ratatui::widgets::Paragraph::new(app::show_values(&app, &app.ts.scope)),
-        area,
-    );
+
+
+fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
+
+    let lines = app::show_values(&app, &app.ts.scope);
+
+    let area = frame.size();
+    let n_right = (area.height / 3).min(lines.len() as u16);
+
+    let layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(Constraint::from_lengths(std::iter::repeat(3).take(n_right as usize)))
+        .split(frame.size());
+
+    for i in 0..n_right {
+        let i = i as usize;
+        frame.render_widget(
+            Paragraph::new(lines[i].clone())
+            .block(Block::new().borders(Borders::ALL)),
+            layout[i]
+        );
+    }
+
+    // frame.render_widget(
+    //     Block::new()
+    //         .borders(Borders::ALL)
+    //         .title("Bottom Right Block"),
+    //     sub_layout[1],
+    // );
+
+    // let area = frame.size();
+    // frame.render_widget(
+    //     ratatui::widgets::Paragraph::new(app::show_values(&app, &app.ts.scope)),
+    //     area,
+    // );
 }
 
 fn update(app: &mut TuiWave) -> anyhow::Result<()> {

@@ -195,7 +195,7 @@ pub fn show_values<'a>(app: &'a TuiWave, s: &'a Scope) -> Vec<Line<'a>> {
     for item in s.items.iter() {
         match item {
             ScopeItem::Value(v) => {
-                lines.push(Line::from(""));
+                // lines.push(Line::from(""));
                 lines.push(format_time_series(
                     format!("{:20}", v.name),
                     &app.ts.values[v.index],
