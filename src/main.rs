@@ -12,6 +12,7 @@ use ratatui::terminal::Frame;
 use ratatui::layout::{Layout, Constraint, Direction};
 use ratatui::widgets::{Block, Borders, Paragraph};
 use ratatui::symbols;
+use ratatui::style::{Style, Stylize, Color};
 
 use std::env;
 
@@ -56,7 +57,9 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
 
         frame.render_widget(
             Paragraph::new(lines[i].clone())
-                .block(Block::new().borders(borders).border_set(border_set)),
+                .block(Block::new().borders(borders).border_set(border_set)
+                    .border_style(Style::new().fg(Color::DarkGray))
+                    ),
             layout[i]
         );
     }
