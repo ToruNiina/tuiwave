@@ -52,15 +52,37 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
         };
 
         if i < lines.len() {
+            let (path, line) = &lines[i];
+
+            let sublayout = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints(Constraint::from_percentages([15, 85]))
+                .split(layout[i]);
+
+            let mut fullpath = String::new();
+            for e in path.into_iter() {
+                fullpath += e;
+            }
             frame.render_widget(
-                Paragraph::new(lines[i].clone())
+                Paragraph::new(fullpath)
+                    .block(
+                        Block::new()
+                        .borders(borders)
+                        .border_set(border_set)
+                        .border_style(Style::new().fg(Color::DarkGray))
+                    ),
+                sublayout[0]
+            );
+
+            frame.render_widget(
+                Paragraph::new(line.clone())
                     .block(
                         Block::new()
                             .borders(borders)
                             .border_set(border_set)
                             .border_style(Style::new().fg(Color::DarkGray))
                     ),
-                layout[i]
+                sublayout[1]
             );
         } else {
             frame.render_widget(
