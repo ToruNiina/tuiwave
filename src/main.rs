@@ -11,44 +11,55 @@ use crossterm::event::{
 use ratatui::terminal::Frame;
 use ratatui::layout::{Layout, Constraint, Direction};
 use ratatui::widgets::{Block, Borders, Paragraph};
+use ratatui::symbols;
 
 use std::env;
-
-
 
 fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
 
     let lines = app::show_values(&app, &app.ts.scope);
 
     let area = frame.size();
-    let n_right = (area.height / 3).min(lines.len() as u16);
+    let n_right = (area.height as usize / 2).min(lines.len());
 
     let layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(Constraint::from_lengths(std::iter::repeat(3).take(n_right as usize)))
+        .constraints(Constraint::from_lengths(std::iter::repeat(2).take(n_right)))
         .split(frame.size());
 
     for i in 0..n_right {
-        let i = i as usize;
+
+        let (border_set, borders) = if i == 0 {
+            (
+                symbols::border::Set {.. symbols::border::PLAIN },
+                Borders::TOP | Borders::LEFT | Borders::RIGHT
+            )
+        } else if i+1 == n_right as usize {
+            (
+                symbols::border::Set {
+                    top_left: symbols::line::NORMAL.vertical_right, // |-
+                    top_right: symbols::line::NORMAL.vertical_left, // -|
+                    .. symbols::border::PLAIN
+                },
+                Borders::ALL
+            )
+        } else {
+            (
+                symbols::border::Set {
+                    top_left: symbols::line::NORMAL.vertical_right, // |-
+                    top_right: symbols::line::NORMAL.vertical_left, // -|
+                    .. symbols::border::PLAIN
+                },
+                Borders::TOP | Borders::LEFT | Borders::RIGHT
+            )
+        };
+
         frame.render_widget(
             Paragraph::new(lines[i].clone())
-            .block(Block::new().borders(Borders::ALL)),
+                .block(Block::new().borders(borders).border_set(border_set)),
             layout[i]
         );
     }
-
-    // frame.render_widget(
-    //     Block::new()
-    //         .borders(Borders::ALL)
-    //         .title("Bottom Right Block"),
-    //     sub_layout[1],
-    // );
-
-    // let area = frame.size();
-    // frame.render_widget(
-    //     ratatui::widgets::Paragraph::new(app::show_values(&app, &app.ts.scope)),
-    //     area,
-    // );
 }
 
 fn update(app: &mut TuiWave) -> anyhow::Result<()> {
