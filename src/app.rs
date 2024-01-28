@@ -8,6 +8,7 @@ pub struct TuiWave {
     pub t_from: u64,
     pub t_to:   u64,
     pub t_last: u64,
+    pub line_from: u64,
     pub width: u64,
     pub should_quit: bool,
 }
@@ -22,7 +23,7 @@ impl TuiWave {
                 }
             }
         }
-        Self{ ts, t_from: 0, t_to: t_last+1, t_last, width: 4, should_quit: false}
+        Self{ ts, t_from: 0, t_to: t_last+1, t_last, line_from: 0, width: 4, should_quit: false}
     }
 }
 

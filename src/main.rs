@@ -26,11 +26,11 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
     // the first line has all (including top and bottom) borders so takes 3 lines.
     let mut constraints = vec![Constraint::Length(3)];
     // other lines does not have top border. takes 2 lines.
-    constraints.extend(Constraint::from_lengths(std::iter::repeat(2).take(n_lines-1)));
+    constraints.extend(Constraint::from_lengths(std::iter::repeat(2).take(n_lines)));
 
     let layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(constraints) // Constraint::from_lengths(std::iter::repeat(2).take(n_lines)))
+        .constraints(constraints)
         .split(frame.size());
 
     // we have 3 kinds of borders for the first, the last, and the other blocks.
@@ -77,8 +77,10 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
         let is_first = i == 0;
         let is_last = i+1 == n_lines || i+1 == lines.len();
 
-        if i < lines.len() {
-            let (path, line) = &lines[i];
+        let idx = i + app.line_from as usize;
+
+        if idx < lines.len() {
+            let (path, line) = &lines[idx];
 
             let sublayout = Layout::default()
                 .direction(Direction::Horizontal)
@@ -136,6 +138,10 @@ fn update(app: &mut TuiWave) -> anyhow::Result<()> {
                         app.t_from = app.t_from.saturating_sub(1);
                         app.t_to   = app.t_to  .saturating_sub(1);
                     }
+                } else if key.code == KeyCode::Char('j') || key.code == KeyCode::Down {
+                    app.line_from = app.line_from.saturating_add(1);
+                } else if key.code == KeyCode::Char('k') || key.code == KeyCode::Up {
+                    app.line_from = app.line_from.saturating_sub(1);
                 } else if key.code == KeyCode::Char('-') {
                     app.width = app.width.saturating_sub(1).max(2);
                 } else if key.code == KeyCode::Char('+') {
