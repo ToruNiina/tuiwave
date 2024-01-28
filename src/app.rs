@@ -189,7 +189,7 @@ fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t
     ratatui::text::Line::from(spans)
 }
 
-pub fn show_values<'a>(app: &'a TuiWave, s: &'a Scope) -> Vec<Line<'a>> {
+pub fn show_values<'a>(app: &'a TuiWave, s: &'a Scope, path: String) -> Vec<Line<'a>> {
     let mut lines = Vec::new();
 
     for item in s.items.iter() {
@@ -197,7 +197,7 @@ pub fn show_values<'a>(app: &'a TuiWave, s: &'a Scope) -> Vec<Line<'a>> {
             ScopeItem::Value(v) => {
                 // lines.push(Line::from(""));
                 lines.push(format_time_series(
-                    format!("{:20}", v.name),
+                    format!("{:40}", path.clone() + &v.name),
                     &app.ts.values[v.index],
                     app.t_from,
                     app.t_to.min(app.t_last+1),
@@ -215,7 +215,7 @@ pub fn show_values<'a>(app: &'a TuiWave, s: &'a Scope) -> Vec<Line<'a>> {
                 // do nothing
             }
             ScopeItem::Scope(subscope) => {
-                let ls = show_values(app, subscope);
+                let ls = show_values(app, subscope, path.clone() + &subscope.name + ".");
                 lines.extend(ls.into_iter());
             }
         }

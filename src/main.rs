@@ -18,7 +18,7 @@ use std::env;
 
 fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
 
-    let lines = app::show_values(&app, &app.ts.scope);
+    let lines = app::show_values(&app, &app.ts.scope, app.ts.scope.name.clone() + ".");
 
     let area = frame.size();
     let n_lines = area.height as usize / 2;
@@ -35,37 +35,31 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
 
     for i in 0..n_lines {
 
-        let (border_set, borders) = if i == 0 {
-            (
-                symbols::border::Set {
-                    bottom_left: symbols::line::NORMAL.vertical_right, // |-
-                    bottom_right: symbols::line::NORMAL.vertical_left, // -|
-                    .. symbols::border::PLAIN
-                },
-                Borders::ALL
-            )
-        } else if i+1 == n_lines || i+1 == lines.len() {
-            (
-                symbols::border::Set {.. symbols::border::PLAIN},
-                Borders::BOTTOM | Borders::LEFT | Borders::RIGHT
-            )
+        let border_set = if i+1 == n_lines || i+1 == lines.len() {
+            symbols::border::Set{..symbols::border::PLAIN}
         } else {
-            (
-                symbols::border::Set {
-                    bottom_left: symbols::line::NORMAL.vertical_right, // |-
-                    bottom_right: symbols::line::NORMAL.vertical_left, // -|
-                    .. symbols::border::PLAIN
-                },
-                Borders::BOTTOM | Borders::LEFT | Borders::RIGHT
-            )
+            symbols::border::Set {
+                bottom_left: symbols::line::NORMAL.vertical_right, // |-
+                bottom_right: symbols::line::NORMAL.vertical_left, // -|
+                .. symbols::border::PLAIN
+            }
+        };
+
+        let borders = if i == 0 {
+            Borders::ALL
+        } else {
+            Borders::BOTTOM | Borders::LEFT | Borders::RIGHT
         };
 
         if i < lines.len() {
             frame.render_widget(
                 Paragraph::new(lines[i].clone())
-                    .block(Block::new().borders(borders).border_set(border_set)
-                        .border_style(Style::new().fg(Color::DarkGray))
-                        ),
+                    .block(
+                        Block::new()
+                            .borders(borders)
+                            .border_set(border_set)
+                            .border_style(Style::new().fg(Color::DarkGray))
+                    ),
                 layout[i]
             );
         } else {
