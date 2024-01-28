@@ -26,7 +26,7 @@ impl TuiWave {
     }
 }
 
-fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t_to: u64, width: u64) -> Line {
+fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64, width: u64) -> Line {
 
     let mut current_t = t_from;
     let mut current_v = Value::Bits(Bits::Z);
@@ -40,7 +40,6 @@ fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t
     // eprintln!("format_time_series({}, t_from={}, t_to={}): change_from = {:?}, to = {:?}", name, t_from, t_to, change_from, change_to);
 
     let mut spans = Vec::new();
-    spans.push(Span::styled(name, Style::new().fg(Color::White).bg(Color::Black)));
 
     let style_bit = Style::new().fg(Color::LightGreen).bg(Color::Black);
     let style_var = Style::new().fg(Color::Black).bg(Color::LightGreen);
@@ -189,20 +188,23 @@ fn format_time_series(name: String, timeline: &ValueChangeStream, t_from: u64, t
     ratatui::text::Line::from(spans)
 }
 
-pub fn show_values<'a>(app: &'a TuiWave, s: &'a Scope, path: String) -> Vec<Line<'a>> {
+pub fn show_values<'a>(app: &'a TuiWave, s: &'a Scope, path: Vec<String>) -> Vec<(Vec<String>, Line<'a>)> {
     let mut lines = Vec::new();
 
     for item in s.items.iter() {
         match item {
             ScopeItem::Value(v) => {
-                // lines.push(Line::from(""));
-                lines.push(format_time_series(
-                    format!("{:40}", path.clone() + &v.name),
-                    &app.ts.values[v.index],
-                    app.t_from,
-                    app.t_to.min(app.t_last+1),
-                    app.width
-                ));
+                let mut path_to_item = path.clone();
+                path_to_item.push(v.name.clone());
+
+                lines.push((path_to_item,
+                    format_time_series(
+                        &app.ts.values[v.index],
+                        app.t_from,
+                        app.t_to.min(app.t_last+1),
+                        app.width
+                        )
+                    ));
             }
             ScopeItem::Scope(_) => {
                 // do nothing
@@ -215,7 +217,9 @@ pub fn show_values<'a>(app: &'a TuiWave, s: &'a Scope, path: String) -> Vec<Line
                 // do nothing
             }
             ScopeItem::Scope(subscope) => {
-                let ls = show_values(app, subscope, path.clone() + &subscope.name + ".");
+                let mut path_to_scope = path.clone();
+                path_to_scope.push(subscope.name.clone());
+                let ls = show_values(app, subscope, path_to_scope);
                 lines.extend(ls.into_iter());
             }
         }
