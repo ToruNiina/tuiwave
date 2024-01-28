@@ -12,7 +12,7 @@ use ratatui::terminal::Frame;
 use ratatui::layout::{Layout, Constraint, Direction};
 use ratatui::widgets::{Block, Borders, Paragraph};
 use ratatui::symbols;
-use ratatui::style::{Style, Stylize, Color};
+use ratatui::style::{Style, Color};
 
 use std::env;
 
@@ -21,47 +21,59 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
     let lines = app::show_values(&app, &app.ts.scope);
 
     let area = frame.size();
-    let n_right = (area.height as usize / 2).min(lines.len());
+    let n_lines = area.height as usize / 2;
+
+    // the first line has all (including top and bottom) borders so takes 3 lines.
+    let mut constraints = vec![Constraint::Length(3)];
+    // other lines does not have top border. takes 2 lines.
+    constraints.extend(Constraint::from_lengths(std::iter::repeat(2).take(n_lines-1)));
 
     let layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(Constraint::from_lengths(std::iter::repeat(2).take(n_right)))
+        .constraints(constraints) // Constraint::from_lengths(std::iter::repeat(2).take(n_lines)))
         .split(frame.size());
 
-    for i in 0..n_right {
+    for i in 0..n_lines {
 
         let (border_set, borders) = if i == 0 {
             (
-                symbols::border::Set {.. symbols::border::PLAIN },
-                Borders::TOP | Borders::LEFT | Borders::RIGHT
-            )
-        } else if i+1 == n_right as usize {
-            (
                 symbols::border::Set {
-                    top_left: symbols::line::NORMAL.vertical_right, // |-
-                    top_right: symbols::line::NORMAL.vertical_left, // -|
+                    bottom_left: symbols::line::NORMAL.vertical_right, // |-
+                    bottom_right: symbols::line::NORMAL.vertical_left, // -|
                     .. symbols::border::PLAIN
                 },
                 Borders::ALL
             )
+        } else if i+1 == n_lines || i+1 == lines.len() {
+            (
+                symbols::border::Set {.. symbols::border::PLAIN},
+                Borders::BOTTOM | Borders::LEFT | Borders::RIGHT
+            )
         } else {
             (
                 symbols::border::Set {
-                    top_left: symbols::line::NORMAL.vertical_right, // |-
-                    top_right: symbols::line::NORMAL.vertical_left, // -|
+                    bottom_left: symbols::line::NORMAL.vertical_right, // |-
+                    bottom_right: symbols::line::NORMAL.vertical_left, // -|
                     .. symbols::border::PLAIN
                 },
-                Borders::TOP | Borders::LEFT | Borders::RIGHT
+                Borders::BOTTOM | Borders::LEFT | Borders::RIGHT
             )
         };
 
-        frame.render_widget(
-            Paragraph::new(lines[i].clone())
-                .block(Block::new().borders(borders).border_set(border_set)
-                    .border_style(Style::new().fg(Color::DarkGray))
-                    ),
-            layout[i]
-        );
+        if i < lines.len() {
+            frame.render_widget(
+                Paragraph::new(lines[i].clone())
+                    .block(Block::new().borders(borders).border_set(border_set)
+                        .border_style(Style::new().fg(Color::DarkGray))
+                        ),
+                layout[i]
+            );
+        } else {
+            frame.render_widget(
+                Block::new().borders(Borders::NONE),
+                layout[i]
+            );
+        }
     }
 }
 
