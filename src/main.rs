@@ -56,22 +56,55 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
         bottom_left: symbols::line::NORMAL.vertical_right,
         .. symbols::border::PLAIN
     };
+    let default_path_set_next_focused = symbols::border::Set {
+        bottom_left: "┢",
+        bottom_right: "┪",
+        horizontal_bottom: "━",
+        .. symbols::border::PLAIN
+    };
+    let default_path_set_focused = symbols::border::Set {
+        bottom_left: "┡",
+        .. symbols::border::THICK
+    };
+
     let default_sign_set = symbols::border::Set {
         top_left: symbols::line::NORMAL.horizontal_down,
         bottom_left: symbols::line::NORMAL.cross,
         bottom_right: symbols::line::NORMAL.vertical_left,
         .. symbols::border::PLAIN
     };
+    let default_sign_set_next_focused = symbols::border::Set {
+        bottom_left: "╈",
+        bottom_right: "┪",
+        horizontal_bottom: "━",
+        .. symbols::border::PLAIN
+    };
+    let default_sign_set_focused = symbols::border::Set {
+        top_left: "┳",
+        bottom_left: "╇",
+        bottom_right: "┩",
+        .. symbols::border::THICK
+    };
 
     let last_path_set = symbols::border::Set {
         .. symbols::border::PLAIN
     };
+    let last_path_set_focused = symbols::border::Set {
+        .. symbols::border::THICK
+    };
+
     let last_sign_set = symbols::border::Set {
         top_left: symbols::line::NORMAL.horizontal_down,
         bottom_left: symbols::line::NORMAL.horizontal_up,
         .. symbols::border::PLAIN
     };
+    let last_sign_set_focused = symbols::border::Set {
+        top_left: "┳",
+        bottom_left: "┻",
+        .. symbols::border::THICK
+    };
 
+    let focused_idx = 2;
     for i in 0..n_lines {
 
         let idx = i + app.line_from as usize;
@@ -94,12 +127,19 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
             }
             fullpath.pop();
 
+            let is_focused = idx == focused_idx;
+            let next_focused = !is_last && (idx+1) == focused_idx;
+
             frame.render_widget(
                 Paragraph::new(fullpath)
                     .block(
                         Block::new()
                         .borders(if is_first {first_path_borders} else {default_path_borders})
-                        .border_set(if is_last {last_path_set} else {default_path_set})
+                        .border_set(if is_last {
+                            if is_focused {last_path_set_focused} else {last_path_set}
+                        } else {
+                            if is_focused {default_path_set_focused} else if next_focused {default_path_set_next_focused} else {default_path_set}
+                        })
                         .border_style(Style::new().fg(Color::DarkGray))
                     ),
                 sublayout[0]
@@ -110,7 +150,11 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
                     .block(
                         Block::new()
                             .borders(if is_first {first_sign_borders} else {default_sign_borders})
-                            .border_set(if is_last {last_sign_set} else {default_sign_set})
+                            .border_set(if is_last {
+                                if is_focused {last_sign_set_focused} else {last_sign_set}
+                            } else {
+                                if is_focused {default_sign_set_focused} else if next_focused {default_sign_set_next_focused} else {default_sign_set}
+                            })
                             .border_style(Style::new().fg(Color::DarkGray))
                     ),
                 sublayout[1]
