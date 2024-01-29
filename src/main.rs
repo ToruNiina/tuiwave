@@ -53,7 +53,7 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
     let default_sign_borders = Borders::BOTTOM | Borders::LEFT | Borders::RIGHT;
 
     let default_path_set = symbols::border::Set {
-        bottom_left: symbols::line::NORMAL.vertical_right,
+        bottom_left: "├",
         .. symbols::border::PLAIN
     };
     let default_path_set_next_focused = symbols::border::Set {
@@ -68,12 +68,13 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
     };
 
     let default_sign_set = symbols::border::Set {
-        top_left: symbols::line::NORMAL.horizontal_down,
-        bottom_left: symbols::line::NORMAL.cross,
-        bottom_right: symbols::line::NORMAL.vertical_left,
+        top_left: "┬",
+        bottom_left: "┼",
+        bottom_right: "┤",
         .. symbols::border::PLAIN
     };
     let default_sign_set_next_focused = symbols::border::Set {
+        top_left: "┬",
         bottom_left: "╈",
         bottom_right: "┪",
         horizontal_bottom: "━",
@@ -94,8 +95,8 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
     };
 
     let last_sign_set = symbols::border::Set {
-        top_left: symbols::line::NORMAL.horizontal_down,
-        bottom_left: symbols::line::NORMAL.horizontal_up,
+        top_left: "┬",
+        bottom_left: "┴",
         .. symbols::border::PLAIN
     };
     let last_sign_set_focused = symbols::border::Set {
@@ -104,7 +105,6 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
         .. symbols::border::THICK
     };
 
-    let focused_idx = 2;
     for i in 0..n_lines {
 
         let idx = i + app.line_from as usize;
@@ -127,8 +127,8 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
             }
             fullpath.pop();
 
-            let is_focused = idx == focused_idx;
-            let next_focused = !is_last && (idx+1) == focused_idx;
+            let is_focused = idx == app.focused;
+            let next_focused = !is_last && (idx+1) == app.focused;
 
             frame.render_widget(
                 Paragraph::new(fullpath)
@@ -183,9 +183,10 @@ fn update(app: &mut TuiWave) -> anyhow::Result<()> {
                         app.t_to   = app.t_to  .saturating_sub(1);
                     }
                 } else if key.code == KeyCode::Char('j') || key.code == KeyCode::Down {
-                    app.line_from = app.line_from.saturating_add(1);
+                    app.focused = (app.focused + 1).min(app.ts.values.len().saturating_sub(1));
+                    // app.line_from = app.line_from.saturating_add(1);
                 } else if key.code == KeyCode::Char('k') || key.code == KeyCode::Up {
-                    app.line_from = app.line_from.saturating_sub(1);
+                    app.focused = app.focused.saturating_sub(1);
                 } else if key.code == KeyCode::Char('-') {
                     app.width = app.width.saturating_sub(1).max(2);
                 } else if key.code == KeyCode::Char('+') {

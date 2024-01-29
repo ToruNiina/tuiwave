@@ -10,6 +10,7 @@ pub struct TuiWave {
     pub t_last: u64,
     pub line_from: u64,
     pub width: u64,
+    pub focused: usize, // idx of focused signal
     pub should_quit: bool,
 }
 
@@ -23,7 +24,7 @@ impl TuiWave {
                 }
             }
         }
-        Self{ ts, t_from: 0, t_to: t_last+1, t_last, line_from: 0, width: 4, should_quit: false}
+        Self{ ts, t_from: 0, t_to: t_last+1, t_last, line_from: 0, width: 4, focused: 0, should_quit: false}
     }
 }
 
