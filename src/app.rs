@@ -58,7 +58,7 @@ fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64, widt
             let dt = (change.time - current_t).max(1);
             let w  = (width * dt - 2) as usize;
 
-            let (txt, sty) = match current_v {
+            let (mut txt, sty) = match current_v {
                 Value::Bits(bits) => {
                     match bits {
                         Bits::B(x) => {
@@ -88,6 +88,10 @@ fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64, widt
                     (format!("{:<width$}", x, width = w), style_var)
                 }
             };
+            assert!(txt.chars().count() >= w);
+            if txt.chars().count() > w {
+                txt = txt.chars().take(w).collect();
+            }
             spans.push(Span::styled(txt, sty));
 
             // total_width += 2;
