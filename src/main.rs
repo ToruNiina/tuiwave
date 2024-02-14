@@ -201,6 +201,9 @@ fn update(app: &mut TuiWave, area: ratatui::layout::Rect) -> anyhow::Result<()> 
                     app.width = app.width.saturating_sub(1).max(2);
                 } else if key.code == KeyCode::Char('+') {
                     app.width = app.width.saturating_add(1).max(2);
+                } else if key.code == KeyCode::Char('0') {
+                    app.t_to   = app.t_to.saturating_sub(app.t_from);
+                    app.t_from = 0;
                 }
             }
         }
