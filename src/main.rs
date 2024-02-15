@@ -18,7 +18,8 @@ use std::env;
 
 fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
 
-    let lines = app::show_values(&app, &app.ts.scope, vec![app.ts.scope.name.clone()]);
+    let values = app::list_values(&app, &app.ts.scope, vec![app.ts.scope.name.clone()]);
+    let lines = app::format_values(&app, values);
 
     let area = frame.size();
     let n_lines = area.height as usize / 2;

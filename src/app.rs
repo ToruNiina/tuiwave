@@ -28,8 +28,9 @@ impl TuiWave {
     }
 }
 
-fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64, width: u64) -> Line {
-
+fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64, width: u64)
+    -> Line
+{
     let mut current_t = t_from;
     let mut current_v = Value::Bits(Bits::Z);
 
@@ -194,42 +195,39 @@ fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64, widt
     ratatui::text::Line::from(spans)
 }
 
-pub fn show_values<'a>(app: &'a TuiWave, s: &'a Scope, path: Vec<String>) -> Vec<(Vec<String>, Line<'a>)> {
+pub fn format_values<'a>(app: &'a TuiWave, values: Vec<(Vec<String>, usize)>)
+    -> Vec<(Vec<String>, Line<'a>)>
+{
     let mut lines = Vec::new();
-
-    for item in s.items.iter() {
-        match item {
-            ScopeItem::Value(v) => {
-                let mut path_to_item = path.clone();
-                path_to_item.push(v.name.clone());
-
-                lines.push((path_to_item,
-                    format_time_series(
-                        &app.ts.values[v.index],
-                        app.t_from,
-                        app.t_to.min(app.t_last+1),
-                        app.width
-                        )
-                    ));
-            }
-            ScopeItem::Scope(_) => {
-                // do nothing
-            }
-        }
-    }
-    for item in s.items.iter() {
-        match item {
-            ScopeItem::Value(_) => {
-                // do nothing
-            }
-            ScopeItem::Scope(subscope) => {
-                let mut path_to_scope = path.clone();
-                path_to_scope.push(subscope.name.clone());
-                let ls = show_values(app, subscope, path_to_scope);
-                lines.extend(ls.into_iter());
-            }
-        }
+    for (path, idx) in values.into_iter() {
+        let line = format_time_series(&app.ts.values[idx],
+                                      app.t_from,
+                                      app.t_to.min(app.t_last+1),
+                                      app.width);
+        lines.push( (path, line) );
     }
     lines
 }
 
+pub fn list_values(app: &TuiWave, s: &Scope, path: Vec<String>)
+    -> Vec<(Vec<String>, usize)>
+{
+    let mut vs = Vec::new();
+    for item in s.items.iter() {
+        if let ScopeItem::Value(v) = item {
+            let mut path_to_item = path.clone();
+            path_to_item.push(v.name.clone());
+            vs.push((path_to_item, v.index));
+        }
+    }
+    for item in s.items.iter() {
+        if let ScopeItem::Scope(subscope) = item {
+            let mut path_to_item = path.clone();
+            path_to_item.push(subscope.name.clone());
+
+            let subvs = list_values(app, subscope, path_to_item);
+            vs.extend(subvs.into_iter());
+        }
+    }
+    vs
+}
