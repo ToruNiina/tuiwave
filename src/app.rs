@@ -196,17 +196,17 @@ fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64, widt
     ratatui::text::Line::from(spans)
 }
 
-pub fn format_values<'a>(app: &'a TuiWave, values: Vec<(String, usize)>)
+pub fn format_values<'a>(app: &'a TuiWave, values: &[(String, usize)])
     -> Vec<(String, Line<'a>)>
 {
     let mut lines = Vec::new();
-    for (path, idx) in values.into_iter() {
+    for (path, idx) in values.iter() {
         let line = format_time_series(
-            &app.ts.values[idx],
+            &app.ts.values[*idx],
             app.t_from,
             app.t_to.min(app.t_last+1),
             app.width);
-        lines.push( (path, line) );
+        lines.push( (path.clone(), line) );
     }
     lines
 }

@@ -19,15 +19,13 @@ use std::env;
 fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
 
     let values = app::list_values(&app, &app.ts.scope, &app.ts.scope.name);
-    let lines = app::format_values(&app, values);
-
-    let area = frame.size();
-    let n_lines = area.height as usize / 2;
+    let line_to = (app.line_from + app.current_drawable_lines-1).min(values.len());
+    let lines = app::format_values(&app, &values[app.line_from..line_to]);
 
     // the first line has all (including top and bottom) borders so takes 3 lines.
     let mut constraints = vec![Constraint::Length(3)];
     // other lines does not have top border. takes 2 lines.
-    constraints.extend(Constraint::from_lengths(std::iter::repeat(2).take(n_lines)));
+    constraints.extend(Constraint::from_lengths(std::iter::repeat(2).take(lines.len())));
 
     let layout = Layout::default()
         .direction(Direction::Vertical)
@@ -106,59 +104,50 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
         .. symbols::border::THICK
     };
 
-    for i in 0..n_lines {
+    for idx in 0..lines.len() {
 
-        let idx = i + app.line_from as usize;
+        let is_first = idx == 0;
+        let is_last = idx+1 == lines.len();
 
-        let is_first = i == 0;
-        let is_last = i+1 == n_lines || idx+1 == lines.len();
+        let (path, line) = &lines[idx];
 
-        if idx < lines.len() {
-            let (path, line) = &lines[idx];
+        let sublayout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(Constraint::from_percentages([15, 85]))
+            .split(layout[idx]);
 
-            let sublayout = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints(Constraint::from_percentages([15, 85]))
-                .split(layout[i]);
+        let is_focused = idx == app.line_focused;
+        let next_focused = !is_last && (idx+1) == app.line_focused;
 
-            let is_focused = idx == app.line_focused;
-            let next_focused = !is_last && (idx+1) == app.line_focused;
+        frame.render_widget(
+            Paragraph::new(path.clone())
+                .block(
+                    Block::new()
+                    .borders(if is_first {first_path_borders} else {default_path_borders})
+                    .border_set(if is_last {
+                        if is_focused {last_path_set_focused} else {last_path_set}
+                    } else {
+                        if is_focused {default_path_set_focused} else if next_focused {default_path_set_next_focused} else {default_path_set}
+                    })
+                    .border_style(Style::new().fg(Color::DarkGray))
+                ),
+            sublayout[0]
+        );
 
-            frame.render_widget(
-                Paragraph::new(path.clone())
-                    .block(
-                        Block::new()
-                        .borders(if is_first {first_path_borders} else {default_path_borders})
+        frame.render_widget(
+            Paragraph::new(line.clone())
+                .block(
+                    Block::new()
+                        .borders(if is_first {first_sign_borders} else {default_sign_borders})
                         .border_set(if is_last {
-                            if is_focused {last_path_set_focused} else {last_path_set}
+                            if is_focused {last_sign_set_focused} else {last_sign_set}
                         } else {
-                            if is_focused {default_path_set_focused} else if next_focused {default_path_set_next_focused} else {default_path_set}
+                            if is_focused {default_sign_set_focused} else if next_focused {default_sign_set_next_focused} else {default_sign_set}
                         })
                         .border_style(Style::new().fg(Color::DarkGray))
-                    ),
-                sublayout[0]
-            );
-
-            frame.render_widget(
-                Paragraph::new(line.clone())
-                    .block(
-                        Block::new()
-                            .borders(if is_first {first_sign_borders} else {default_sign_borders})
-                            .border_set(if is_last {
-                                if is_focused {last_sign_set_focused} else {last_sign_set}
-                            } else {
-                                if is_focused {default_sign_set_focused} else if next_focused {default_sign_set_next_focused} else {default_sign_set}
-                            })
-                            .border_style(Style::new().fg(Color::DarkGray))
-                    ),
-                sublayout[1]
-            );
-        } else {
-            frame.render_widget(
-                Block::new().borders(Borders::NONE),
-                layout[i]
-            );
-        }
+                ),
+            sublayout[1]
+        );
     }
 }
 
