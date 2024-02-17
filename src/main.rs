@@ -18,7 +18,7 @@ use std::env;
 
 fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
 
-    let values = app::list_values(&app, &app.ts.scope, vec![app.ts.scope.name.clone()]);
+    let values = app::list_values(&app, &app.ts.scope, &app.ts.scope.name);
     let lines = app::format_values(&app, values);
 
     let area = frame.size();
@@ -121,18 +121,11 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
                 .constraints(Constraint::from_percentages([15, 85]))
                 .split(layout[i]);
 
-            let mut fullpath = String::new();
-            for e in path.into_iter() {
-                fullpath += e;
-                fullpath += ".";
-            }
-            fullpath.pop();
-
             let is_focused = idx == app.line_focused;
             let next_focused = !is_last && (idx+1) == app.line_focused;
 
             frame.render_widget(
-                Paragraph::new(fullpath)
+                Paragraph::new(path.clone())
                     .block(
                         Block::new()
                         .borders(if is_first {first_path_borders} else {default_path_borders})

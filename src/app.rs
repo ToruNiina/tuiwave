@@ -195,37 +195,39 @@ fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64, widt
     ratatui::text::Line::from(spans)
 }
 
-pub fn format_values<'a>(app: &'a TuiWave, values: Vec<(Vec<String>, usize)>)
-    -> Vec<(Vec<String>, Line<'a>)>
+pub fn format_values<'a>(app: &'a TuiWave, values: Vec<(String, usize)>)
+    -> Vec<(String, Line<'a>)>
 {
     let mut lines = Vec::new();
     for (path, idx) in values.into_iter() {
-        let line = format_time_series(&app.ts.values[idx],
-                                      app.t_from,
-                                      app.t_to.min(app.t_last+1),
-                                      app.width);
+        let line = format_time_series(
+            &app.ts.values[idx],
+            app.t_from,
+            app.t_to.min(app.t_last+1),
+            app.width);
         lines.push( (path, line) );
     }
     lines
 }
 
-pub fn list_values(app: &TuiWave, s: &Scope, path: Vec<String>)
-    -> Vec<(Vec<String>, usize)>
+pub fn list_values(app: &TuiWave, s: &Scope, path: &String) -> Vec<(String, usize)>
 {
     let mut vs = Vec::new();
     for item in s.items.iter() {
         if let ScopeItem::Value(v) = item {
             let mut path_to_item = path.clone();
-            path_to_item.push(v.name.clone());
+            path_to_item += ".";
+            path_to_item += &v.name;
             vs.push((path_to_item, v.index));
         }
     }
     for item in s.items.iter() {
         if let ScopeItem::Scope(subscope) = item {
             let mut path_to_item = path.clone();
-            path_to_item.push(subscope.name.clone());
+            path_to_item += ".";
+            path_to_item += &subscope.name;
 
-            let subvs = list_values(app, subscope, path_to_item);
+            let subvs = list_values(app, subscope, &path_to_item);
             vs.extend(subvs.into_iter());
         }
     }
