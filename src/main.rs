@@ -162,44 +162,49 @@ fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
     }
 }
 
-fn update(app: &mut TuiWave, area: ratatui::layout::Rect) -> anyhow::Result<()> {
-
-    let n_lines = area.height as usize / 2;
-    let n_lines = if area.height % 2 == 1 { n_lines } else { n_lines - 1 };
-
-    if app.line_focused < app.line_from {
-        app.line_from = app.line_focused;
-    }
-    if (n_lines + app.line_from).saturating_sub(1) < app.line_focused {
-        app.line_from = app.line_focused - n_lines + 1;
-    }
+fn update(app: &mut TuiWave) -> anyhow::Result<()> {
 
     if crossterm::event::poll(std::time::Duration::from_millis(1000/60))? {
-        if let Event::Key(key) = crossterm::event::read()? {
-            if key.kind == KeyEventKind::Press {
-                if key.code == KeyCode::Char('q') {
-                    app.should_quit = true;
-                } else if key.code == KeyCode::Char('l') || key.code == KeyCode::Right {
-                    app.t_from = app.t_from.saturating_add(1);
-                    app.t_to   = app.t_to  .saturating_add(1);
-                } else if key.code == KeyCode::Char('h') || key.code == KeyCode::Left {
-                    if app.t_from != 0 {
-                        app.t_from = app.t_from.saturating_sub(1);
-                        app.t_to   = app.t_to  .saturating_sub(1);
+        match crossterm::event::read()? {
+            Event::Key(key) => {
+                if key.kind == KeyEventKind::Press {
+                    if key.code == KeyCode::Char('q') {
+                        app.should_quit = true;
+                    } else if key.code == KeyCode::Char('l') || key.code == KeyCode::Right {
+                        app.t_from = app.t_from.saturating_add(1);
+                        app.t_to   = app.t_to  .saturating_add(1);
+                    } else if key.code == KeyCode::Char('h') || key.code == KeyCode::Left {
+                        if app.t_from != 0 {
+                            app.t_from = app.t_from.saturating_sub(1);
+                            app.t_to   = app.t_to  .saturating_sub(1);
+                        }
+                    } else if key.code == KeyCode::Char('j') || key.code == KeyCode::Down {
+                        app.line_focused = (app.line_focused + 1).min(app.ts.values.len().saturating_sub(1));
+                    } else if key.code == KeyCode::Char('k') || key.code == KeyCode::Up {
+                        app.line_focused = app.line_focused.saturating_sub(1);
+                    } else if key.code == KeyCode::Char('-') {
+                        app.width = app.width.saturating_sub(1).max(2);
+                    } else if key.code == KeyCode::Char('+') {
+                        app.width = app.width.saturating_add(1).max(2);
+                    } else if key.code == KeyCode::Char('0') {
+                        app.t_to   = app.t_to.saturating_sub(app.t_from);
+                        app.t_from = 0;
                     }
-                } else if key.code == KeyCode::Char('j') || key.code == KeyCode::Down {
-                    app.line_focused = (app.line_focused + 1).min(app.ts.values.len().saturating_sub(1));
-                } else if key.code == KeyCode::Char('k') || key.code == KeyCode::Up {
-                    app.line_focused = app.line_focused.saturating_sub(1);
-                } else if key.code == KeyCode::Char('-') {
-                    app.width = app.width.saturating_sub(1).max(2);
-                } else if key.code == KeyCode::Char('+') {
-                    app.width = app.width.saturating_add(1).max(2);
-                } else if key.code == KeyCode::Char('0') {
-                    app.t_to   = app.t_to.saturating_sub(app.t_from);
-                    app.t_from = 0;
                 }
-            }
+            },
+            Event::Resize(_w, h) => {
+                let n_lines = h as usize / 2;
+                let n_lines = if h % 2 == 1 { n_lines } else { n_lines - 1 };
+
+                if app.line_focused < app.line_from {
+                    app.line_from = app.line_focused;
+                }
+                if (n_lines + app.line_from).saturating_sub(1) < app.line_focused {
+                    app.line_from = app.line_focused - n_lines + 1;
+                }
+
+            },
+            _ => {}
         }
     }
     Ok(())
@@ -234,7 +239,7 @@ fn main() -> anyhow::Result<()> {
         ratatui::backend::CrosstermBackend::new(std::io::stdout()))?;
     terminal.clear()?;
     loop {
-        update(&mut app, terminal.size()?)?;
+        update(&mut app)?;
 
         terminal.draw(|frame| { draw_ui(&app, frame) })?;
 
