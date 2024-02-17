@@ -11,6 +11,7 @@ pub struct TuiWave {
     pub width: u64,
     pub line_from: usize,
     pub line_focused: usize,
+    pub current_drawable_lines: usize,
     pub should_quit: bool,
 }
 
@@ -24,7 +25,7 @@ impl TuiWave {
                 }
             }
         }
-        Self{ ts, t_from: 0, t_to: t_last+1, t_last, width: 4, line_from: 0, line_focused: 0, should_quit: false}
+        Self{ ts, t_from: 0, t_to: t_last+1, t_last, width: 4, line_from: 0, line_focused: 0, current_drawable_lines: 0, should_quit: false}
     }
 }
 

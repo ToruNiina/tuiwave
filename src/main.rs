@@ -180,8 +180,15 @@ fn update(app: &mut TuiWave) -> anyhow::Result<()> {
                         }
                     } else if key.code == KeyCode::Char('j') || key.code == KeyCode::Down {
                         app.line_focused = (app.line_focused + 1).min(app.ts.values.len().saturating_sub(1));
+
+                        if (app.current_drawable_lines + app.line_from).saturating_sub(1) < app.line_focused {
+                            app.line_from = app.line_focused - app.current_drawable_lines + 1;
+                        }
                     } else if key.code == KeyCode::Char('k') || key.code == KeyCode::Up {
                         app.line_focused = app.line_focused.saturating_sub(1);
+                        if app.line_focused < app.line_from {
+                            app.line_from = app.line_focused;
+                        }
                     } else if key.code == KeyCode::Char('-') {
                         app.width = app.width.saturating_sub(1).max(2);
                     } else if key.code == KeyCode::Char('+') {
@@ -202,7 +209,7 @@ fn update(app: &mut TuiWave) -> anyhow::Result<()> {
                 if (n_lines + app.line_from).saturating_sub(1) < app.line_focused {
                     app.line_from = app.line_focused - n_lines + 1;
                 }
-
+                app.current_drawable_lines = n_lines;
             },
             _ => {}
         }
@@ -238,6 +245,12 @@ fn main() -> anyhow::Result<()> {
     let mut terminal = ratatui::terminal::Terminal::new(
         ratatui::backend::CrosstermBackend::new(std::io::stdout()))?;
     terminal.clear()?;
+
+    let termsize = terminal.size()?;
+    let n_lines = termsize.height as usize / 2;
+    let n_lines = if termsize.height % 2 == 1 { n_lines } else { n_lines - 1 };
+    app.current_drawable_lines = n_lines;
+
     loop {
         update(&mut app)?;
 
