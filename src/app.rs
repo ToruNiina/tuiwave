@@ -1,7 +1,11 @@
 use crate::timeseries::*;
 
+use ratatui::symbols;
 use ratatui::style::{Style, Color};
 use ratatui::text::{Line, Span};
+use ratatui::terminal::Frame;
+use ratatui::layout::{Layout, Constraint, Direction, Rect};
+use ratatui::widgets::{Block, Borders, Paragraph};
 
 pub struct TuiWave {
     pub ts: TimeSeries,
@@ -234,3 +238,140 @@ pub fn list_values(app: &TuiWave, s: &Scope, path: &String) -> Vec<(String, usiz
     }
     vs
 }
+
+pub fn draw_timeline(app: &TuiWave, frame: &mut Frame, chunk: &Rect) {
+
+    let values = list_values(&app, &app.ts.scope, &app.ts.scope.name);
+    let line_to = (app.line_from + app.current_drawable_lines-1).min(values.len());
+    let lines = format_values(&app, &values[app.line_from..line_to]);
+
+    // the first line has all (including top and bottom) borders so takes 3 lines.
+    let mut constraints = vec![Constraint::Length(3)];
+    // other lines does not have top border. takes 2 lines.
+    constraints.extend(Constraint::from_lengths(std::iter::repeat(2).take(lines.len())));
+
+    let layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(constraints)
+        .split(*chunk);
+
+    // we have 3 kinds of borders for the first, the last, and the other blocks.
+    //
+    //   .---------- -------------.
+    //   | 1st path  | 1st signal |
+    //   |---------- +------------|
+    //
+    //   | 2nd path  | 2nd signal |
+    //   |---------- +------------|
+    //
+    //   | Nth path  | Nth signal |
+    //   '---------- -------------'
+    //
+
+    let first_path_borders = Borders::TOP | Borders::BOTTOM | Borders::LEFT;
+    let first_sign_borders = Borders::ALL;
+
+    let default_path_borders = Borders::BOTTOM | Borders::LEFT;
+    let default_sign_borders = Borders::BOTTOM | Borders::LEFT | Borders::RIGHT;
+
+    let default_path_set = symbols::border::Set {
+        bottom_left: "├",
+        .. symbols::border::PLAIN
+    };
+    let default_path_set_next_focused = symbols::border::Set {
+        bottom_left: "┢",
+        bottom_right: "┪",
+        horizontal_bottom: "━",
+        .. symbols::border::PLAIN
+    };
+    let default_path_set_focused = symbols::border::Set {
+        bottom_left: "┡",
+        .. symbols::border::THICK
+    };
+
+    let default_sign_set = symbols::border::Set {
+        top_left: "┬",
+        bottom_left: "┼",
+        bottom_right: "┤",
+        .. symbols::border::PLAIN
+    };
+    let default_sign_set_next_focused = symbols::border::Set {
+        top_left: "┬",
+        bottom_left: "╈",
+        bottom_right: "┪",
+        horizontal_bottom: "━",
+        .. symbols::border::PLAIN
+    };
+    let default_sign_set_focused = symbols::border::Set {
+        top_left: "┳",
+        bottom_left: "╇",
+        bottom_right: "┩",
+        .. symbols::border::THICK
+    };
+
+    let last_path_set = symbols::border::Set {
+        .. symbols::border::PLAIN
+    };
+    let last_path_set_focused = symbols::border::Set {
+        .. symbols::border::THICK
+    };
+
+    let last_sign_set = symbols::border::Set {
+        top_left: "┬",
+        bottom_left: "┴",
+        .. symbols::border::PLAIN
+    };
+    let last_sign_set_focused = symbols::border::Set {
+        top_left: "┳",
+        bottom_left: "┻",
+        .. symbols::border::THICK
+    };
+
+    for idx in 0..lines.len() {
+
+        let is_first = idx == 0;
+        let is_last = idx+1 == lines.len();
+
+        let (path, line) = &lines[idx];
+
+        let sublayout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(Constraint::from_percentages([15, 85]))
+            .split(layout[idx]);
+
+        let is_focused = idx == app.line_focused;
+        let next_focused = !is_last && (idx+1) == app.line_focused;
+
+        frame.render_widget(
+            Paragraph::new(path.clone())
+                .block(
+                    Block::new()
+                    .borders(if is_first {first_path_borders} else {default_path_borders})
+                    .border_set(if is_last {
+                        if is_focused {last_path_set_focused} else {last_path_set}
+                    } else {
+                        if is_focused {default_path_set_focused} else if next_focused {default_path_set_next_focused} else {default_path_set}
+                    })
+                    .border_style(Style::new().fg(Color::DarkGray))
+                ),
+            sublayout[0]
+        );
+
+        frame.render_widget(
+            Paragraph::new(line.clone())
+                .block(
+                    Block::new()
+                        .borders(if is_first {first_sign_borders} else {default_sign_borders})
+                        .border_set(if is_last {
+                            if is_focused {last_sign_set_focused} else {last_sign_set}
+                        } else {
+                            if is_focused {default_sign_set_focused} else if next_focused {default_sign_set_next_focused} else {default_sign_set}
+                        })
+                        .border_style(Style::new().fg(Color::DarkGray))
+                ),
+            sublayout[1]
+        );
+    }
+}
+
+
