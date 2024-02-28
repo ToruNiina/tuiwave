@@ -6,7 +6,7 @@ use app::TuiWave;
 
 use crossterm::ExecutableCommand;
 use crossterm::event::{
-    Event, KeyEventKind, KeyCode
+    Event, KeyEventKind
 };
 use ratatui::terminal::Frame;
 use ratatui::layout::{Layout, Constraint, Direction};
@@ -80,48 +80,11 @@ fn update(app: &mut TuiWave) -> anyhow::Result<()> {
         match crossterm::event::read()? {
             Event::Key(key) => {
                 if key.kind == KeyEventKind::Press {
-                    if key.code == KeyCode::Char('q') {
-                        app.should_quit = true;
-                    } else if key.code == KeyCode::Char('l') || key.code == KeyCode::Right {
-                        app.t_from = app.t_from.saturating_add(1);
-                        app.t_to   = app.t_to  .saturating_add(1);
-                    } else if key.code == KeyCode::Char('h') || key.code == KeyCode::Left {
-                        if app.t_from != 0 {
-                            app.t_from = app.t_from.saturating_sub(1);
-                            app.t_to   = app.t_to  .saturating_sub(1);
-                        }
-                    } else if key.code == KeyCode::Char('j') || key.code == KeyCode::Down {
-                        app.line_focused = (app.line_focused + 1).min(app.ts.values.len().saturating_sub(1));
-
-                        if (app.current_drawable_lines + app.line_from).saturating_sub(1) < app.line_focused {
-                            app.line_from = app.line_focused - app.current_drawable_lines + 1;
-                        }
-                    } else if key.code == KeyCode::Char('k') || key.code == KeyCode::Up {
-                        app.line_focused = app.line_focused.saturating_sub(1);
-                        if app.line_focused < app.line_from {
-                            app.line_from = app.line_focused;
-                        }
-                    } else if key.code == KeyCode::Char('-') {
-                        app.width = app.width.saturating_sub(1).max(2);
-                    } else if key.code == KeyCode::Char('+') {
-                        app.width = app.width.saturating_add(1).max(2);
-                    } else if key.code == KeyCode::Char('0') {
-                        app.t_to   = app.t_to.saturating_sub(app.t_from);
-                        app.t_from = 0;
-                    }
+                    app.key_press(key.code, key.modifiers, key.state);
                 }
             },
-            Event::Resize(_w, h) => {
-                let n_lines = h as usize / 2;
-                let n_lines = if h % 2 == 1 { n_lines } else { n_lines - 1 };
-
-                if app.line_focused < app.line_from {
-                    app.line_from = app.line_focused;
-                }
-                if (n_lines + app.line_from).saturating_sub(1) < app.line_focused {
-                    app.line_from = app.line_focused - n_lines + 1;
-                }
-                app.current_drawable_lines = n_lines;
+            Event::Resize(w, h) => {
+                app.resize(w, h);
             },
             _ => {}
         }
