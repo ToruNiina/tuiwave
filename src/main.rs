@@ -10,8 +10,6 @@ use crossterm::event::{
     Event, KeyEventKind
 };
 
-use std::env;
-
 fn update(app: &mut TuiWave) -> anyhow::Result<()> {
 
     if crossterm::event::poll(std::time::Duration::from_millis(1000/60))? {
@@ -43,7 +41,7 @@ fn shutdown() -> anyhow::Result<()> {
 }
 
 fn main() -> anyhow::Result<()> {
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<String> = std::env::args().collect();
     if args.len() != 2 {
         println!("usage: ./tuiwave [filename.vcd]");
         return Err(anyhow::anyhow!("missing file"));
