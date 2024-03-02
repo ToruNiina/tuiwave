@@ -1,4 +1,6 @@
 use crate::timeseries::*;
+use crate::ui::list_values;
+
 use ratatui::layout::Rect;
 
 use crossterm::event::{
@@ -29,6 +31,7 @@ impl Layout {
 
 pub struct TuiWave {
     pub ts: TimeSeries,
+    pub selected_values: Vec<(String, usize)>,
 
     pub t_from: u64,
     pub t_to:   u64,
@@ -53,6 +56,7 @@ impl TuiWave {
         };
         Self{
             ts,
+            selected_values: Vec::new(),
             t_from: 0,
             t_to: t_last+1,
             t_last,
@@ -74,6 +78,8 @@ impl TuiWave {
     pub fn setup_with_terminal_size(&mut self, termsize: Rect) {
         self.layout.resize(termsize.width, termsize.height);
         self.setup_drawable_time_range();
+
+        self.selected_values = list_values(self, &self.ts.scope, &self.ts.scope.name);
     }
 
     pub fn key_press(&mut self, key: KeyCode, _modifiers: KeyModifiers, _state: KeyEventState) {
