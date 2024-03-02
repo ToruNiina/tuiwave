@@ -44,8 +44,11 @@ impl TuiWave {
         let n_lines = if termsize.height % 2 == 1 { n_lines } else { n_lines - 1 };
         self.current_drawable_lines = n_lines;
 
-        let main_pane = termsize.width * self.current_sidebar_width_percent / 100;
+        let main_pane = termsize.width * (100 - self.current_sidebar_width_percent) / 100;
         self.current_stream_width = (main_pane * (100 - self.current_signame_width_percent) / 100) as u64;
+
+        self.t_to = (self.current_stream_width / self.width) + self.t_from;
+        self.t_to = self.t_to.min(self.t_last+1)
     }
 
     pub fn key_press(&mut self, key: KeyCode, _modifiers: KeyModifiers, _state: KeyEventState) {
