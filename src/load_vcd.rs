@@ -85,7 +85,8 @@ pub fn load_vcd<R: std::io::BufRead>(src: R) -> anyhow::Result<TimeSeries> {
     let mut current_t = 0;
 
     for cmd in parser {
-        let cmd = match cmd? {
+        let cmd = cmd?;
+        match cmd {
             vcd::Command::Timestamp(t) => {
                 current_t = t;
             }
