@@ -328,7 +328,7 @@ fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 pub fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
 
     // add side bar showing a list of signals
-    let layout = Layout::default()
+    let root = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(Constraint::from_percentages([
             app.layout.sidebar_width_percent,
@@ -342,10 +342,10 @@ pub fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
     // other lines does not have top border. takes 2 lines.
     constraints.extend(Constraint::from_lengths(std::iter::repeat(2).take(values.len())));
 
-    let sublayout = Layout::default()
+    let sidebar = Layout::default()
         .direction(Direction::Vertical)
         .constraints(constraints)
-        .split(layout[0]);
+        .split(root[0]);
 
     //   .------------.
     //   | 1st signal |
@@ -380,9 +380,9 @@ pub fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
                 .border_set(if is_last {last_path_set} else {default_path_set})
                 .border_style(Style::new().fg(Color::DarkGray))
             ),
-            sublayout[idx]);
+            sidebar[idx]);
     }
 
-    draw_timeline(app, frame, &layout[1]);
+    draw_timeline(app, frame, &root[1]);
 }
 
