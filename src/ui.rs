@@ -3,7 +3,7 @@ use crate::app;
 
 use ratatui::symbols;
 use ratatui::style::{Style, Color};
-use ratatui::text::{Line, Span};
+use ratatui::text::{Line, Span, Text};
 use ratatui::terminal::Frame;
 use ratatui::layout::{Layout, Constraint, Direction, Rect};
 use ratatui::widgets::{Block, Borders, Paragraph};
@@ -337,50 +337,18 @@ pub fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
 
     let values = list_values(&app, &app.ts.scope, &app.ts.scope.name);
 
-    let mut constraints = vec![Constraint::Length(3)];
-    // other lines does not have top border. takes 2 lines.
-    constraints.extend(Constraint::from_lengths(std::iter::repeat(2).take(values.len())));
+    let mut value_list = Vec::new();
 
-    let sidebar = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(constraints)
-        .split(root[0]);
-
-    //   .------------.
-    //   | 1st signal |
-    //   |------------|
-    //
-    //   | 2nd signal |
-    //   |------------|
-    //
-    //   | Nth path   |
-    //   '------------'
-
-    let first_path_borders = Borders::TOP | Borders::BOTTOM | Borders::LEFT | Borders::RIGHT;
-    let default_path_borders = Borders::BOTTOM | Borders::LEFT | Borders::RIGHT;
-
-    let default_path_set = symbols::border::Set {
-        bottom_left: "├",
-        bottom_right: "┤",
-        .. symbols::border::PLAIN
-    };
-    let last_path_set = symbols::border::Set {
-        .. symbols::border::PLAIN
-    };
-
-    for (idx, (name, _)) in values.iter().enumerate() {
-        let is_first = idx == 0;
-        let is_last  = idx+1 == values.len();
-
-        frame.render_widget(
-            Paragraph::new(name.clone()).block(
-                Block::new()
-                .borders(if is_first {first_path_borders} else {default_path_borders})
-                .border_set(if is_last {last_path_set} else {default_path_set})
-                .border_style(Style::new().fg(Color::DarkGray))
-            ),
-            sidebar[idx]);
+    for (name, _) in values.iter() {
+        value_list.push(Line::raw(name));
     }
+    frame.render_widget(
+        Paragraph::new(Text::from(value_list)).block(
+            Block::new()
+            .borders(Borders::ALL)
+            .border_style(Style::new().fg(Color::DarkGray))
+        ),
+        root[0]);
 
     draw_timeline(app, &values, frame, &root[1]);
 }
