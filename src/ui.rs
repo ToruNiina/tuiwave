@@ -324,7 +324,7 @@ fn draw_timeline(app: &app::TuiWave, values: &Vec<(String, usize)>, frame: &mut 
     }
 }
 
-pub fn draw_sidebar(_app: &app::TuiWave, values: &Vec<(String, usize)>, frame: &mut Frame, chunk: &Rect) {
+fn draw_sidebar(_app: &app::TuiWave, values: &Vec<(String, usize)>, frame: &mut Frame, chunk: &Rect) {
 
     let value_list = values.iter().map(|(x, _)| Line::raw(x)).collect::<Vec<_>>();
 
