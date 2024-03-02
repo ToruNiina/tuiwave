@@ -324,13 +324,19 @@ fn draw_timeline(app: &app::TuiWave, values: &Vec<(String, usize)>, frame: &mut 
     }
 }
 
-pub fn draw_sidebar(app: &app::TuiWave, values: &Vec<(String, usize)>, frame: &mut Frame, chunk: &Rect) {
+pub fn draw_sidebar(_app: &app::TuiWave, values: &Vec<(String, usize)>, frame: &mut Frame, chunk: &Rect) {
 
-    let mut value_list = Vec::new();
+    let value_list = values.iter().map(|(x, _)| Line::raw(x)).collect::<Vec<_>>();
 
-    for (name, _) in values.iter() {
-        value_list.push(Line::raw(name));
-    }
+    let name_size = value_list.len() * 2 + 1;
+
+    let names = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(name_size as u16),
+            Constraint::Fill(1)
+        ])
+        .split(*chunk);
 
     frame.render_widget(
         Paragraph::new(Text::from(value_list)).block(
@@ -338,7 +344,7 @@ pub fn draw_sidebar(app: &app::TuiWave, values: &Vec<(String, usize)>, frame: &m
             .borders(Borders::ALL)
             .border_style(Style::new().fg(Color::DarkGray))
         ),
-        *chunk);
+        names[0]);
 }
 
 pub fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
