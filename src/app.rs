@@ -11,6 +11,9 @@ pub struct Layout {
     pub sidebar_width_percent: u16,
     pub signame_width_percent: u16,
     pub timedelta_width: u64,
+
+    pub current_width: u16,
+    pub current_height: u16,
 }
 
 pub struct TuiWave {
@@ -34,6 +37,8 @@ impl TuiWave {
             sidebar_width_percent: 15,
             signame_width_percent: 15,
             timedelta_width: 4,
+            current_width: 0,
+            current_height: 0,
         };
         Self{
             ts,
@@ -48,6 +53,9 @@ impl TuiWave {
     }
 
     pub fn setup_with_terminal_size(&mut self, termsize: Rect) {
+        self.layout.current_width  = termsize.width;
+        self.layout.current_height = termsize.height;
+
         let n_lines = termsize.height as usize / 2;
         let n_lines = if termsize.height % 2 == 1 { n_lines } else { n_lines - 1 };
         self.layout.drawable_lines = n_lines;
@@ -96,7 +104,10 @@ impl TuiWave {
         }
     }
 
-    pub fn resize(&mut self, _w: u16, h: u16) {
+    pub fn resize(&mut self, w: u16, h: u16) {
+        self.layout.current_width  = w;
+        self.layout.current_height = h;
+
         let n_lines = h as usize / 2;
         let n_lines = if h % 2 == 1 { n_lines } else { n_lines - 1 };
 
