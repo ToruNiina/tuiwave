@@ -101,7 +101,7 @@ pub fn load_vcd<R: std::io::BufRead>(src: R) -> anyhow::Result<TimeSeries> {
                     }
                     xs.stream.push(ValueChange::new(current_t, Bits::from_vcd_scalar(v)));
                 } else {
-                    assert!(false, "type error");
+                    panic!("type error");
                 }
             }
             vcd::Command::ChangeVector(i, v) => {
@@ -114,7 +114,7 @@ pub fn load_vcd<R: std::io::BufRead>(src: R) -> anyhow::Result<TimeSeries> {
                     }
                     xs.stream.push(ValueChange::new(current_t, Bits::from_vcd_vector(v)));
                 } else {
-                    assert!(false, "type error");
+                    panic!("type error");
                 }
             }
             vcd::Command::ChangeReal(i, v) => {
@@ -127,7 +127,7 @@ pub fn load_vcd<R: std::io::BufRead>(src: R) -> anyhow::Result<TimeSeries> {
                     }
                     xs.stream.push(ValueChange::new(current_t, v));
                 } else {
-                    assert!(false, "type error");
+                    panic!("type error");
                 }
             }
             vcd::Command::ChangeString(i, v) => {
@@ -140,7 +140,7 @@ pub fn load_vcd<R: std::io::BufRead>(src: R) -> anyhow::Result<TimeSeries> {
                     }
                     xs.stream.push(ValueChange::new(current_t, v));
                 } else {
-                    assert!(false, "type error");
+                    panic!("type error");
                 }
             }
             _ => {
