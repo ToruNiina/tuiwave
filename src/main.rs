@@ -2,6 +2,7 @@ mod timeseries;
 mod load_vcd;
 mod app;
 mod ui;
+mod log;
 
 use app::TuiWave;
 
