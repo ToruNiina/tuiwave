@@ -16,6 +16,17 @@ pub struct Layout {
     pub current_height: u16,
 }
 
+impl Layout {
+    fn resize(&mut self, w: u16, h: u16) {
+        self.current_width = w;
+        self.current_height = h;
+
+        let n_lines = self.current_height as usize / 2;
+        let n_lines = if self.current_height % 2 == 1 { n_lines } else { n_lines - 1 };
+        self.drawable_lines = n_lines;
+    }
+}
+
 pub struct TuiWave {
     pub ts: TimeSeries,
 
@@ -52,19 +63,17 @@ impl TuiWave {
         }
     }
 
-    pub fn setup_with_terminal_size(&mut self, termsize: Rect) {
-        self.layout.current_width  = termsize.width;
-        self.layout.current_height = termsize.height;
-
-        let n_lines = termsize.height as usize / 2;
-        let n_lines = if termsize.height % 2 == 1 { n_lines } else { n_lines - 1 };
-        self.layout.drawable_lines = n_lines;
-
-        let main_pane = termsize.width * (100 - self.layout.sidebar_width_percent) / 100;
+    // call it after resizing the window, or changed the rayout parameters
+    fn setup_drawable_time_range(&mut self) {
+        let main_pane = self.layout.current_width * (100 - self.layout.sidebar_width_percent) / 100;
         self.layout.stream_width = (main_pane * (100 - self.layout.signame_width_percent) / 100) as u64;
+        let time_range = self.layout.stream_width / self.layout.timedelta_width;
+        self.t_to = (self.t_from + time_range).min(self.t_last+1);
+    }
 
-        self.t_to = (self.layout.stream_width / self.layout.timedelta_width) + self.t_from;
-        self.t_to = self.t_to.min(self.t_last+1)
+    pub fn setup_with_terminal_size(&mut self, termsize: Rect) {
+        self.layout.resize(termsize.width, termsize.height);
+        self.setup_drawable_time_range();
     }
 
     pub fn key_press(&mut self, key: KeyCode, _modifiers: KeyModifiers, _state: KeyEventState) {
@@ -91,8 +100,10 @@ impl TuiWave {
             }
         } else if key == KeyCode::Char('-') {
             self.layout.timedelta_width = self.layout.timedelta_width.saturating_sub(1).max(2);
+            self.setup_drawable_time_range();
         } else if key == KeyCode::Char('+') {
             self.layout.timedelta_width = self.layout.timedelta_width.saturating_add(1).max(2);
+            self.setup_drawable_time_range();
         } else if key == KeyCode::Char('0') {
             let dt = self.t_to.saturating_sub(self.t_from);
             self.t_to   = dt;
@@ -105,8 +116,7 @@ impl TuiWave {
     }
 
     pub fn resize(&mut self, w: u16, h: u16) {
-        self.layout.current_width  = w;
-        self.layout.current_height = h;
+        self.layout.resize(w, h);
 
         let n_lines = h as usize / 2;
         let n_lines = if h % 2 == 1 { n_lines } else { n_lines - 1 };
@@ -117,6 +127,5 @@ impl TuiWave {
         if (n_lines + self.line_from).saturating_sub(1) < self.line_focused {
             self.line_from = self.line_focused - n_lines + 1;
         }
-        self.layout.drawable_lines = n_lines;
     }
 }
