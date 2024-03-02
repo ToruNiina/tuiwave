@@ -60,35 +60,39 @@ impl Bits {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Value {
-    Bits(Bits),
-    Real(f64),
-    String(String),
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct ValueChange {
+pub struct ValueChange<T: std::fmt::Debug + Clone + PartialEq> {
     pub time: u64,
-    pub new_value: Value,
+    pub new_value: T,
 }
-impl ValueChange {
-    pub fn new(time: u64, new_value: Value) -> Self {
+impl<T: std::fmt::Debug + Clone + PartialEq> ValueChange<T> {
+    pub fn new(time: u64, new_value: T) -> Self {
         Self{ time, new_value }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct ValueChangeStream {
-    pub history: Vec<ValueChange>,
+pub enum ValueChangeStream {
+    Bits(Vec<ValueChange<Bits>>),
+    Real(Vec<ValueChange<f64>>),
+    String(Vec<ValueChange<String>>),
+    Unknown,
 }
 
 impl ValueChangeStream {
-    pub fn new() -> Self {
-        Self{ history: Vec::new() }
-    }
 
     pub fn change_before(&self, t: u64) -> Option<usize> {
-        if let Some(first) = self.history.first() {
+        match self {
+            ValueChangeStream::Bits(stream)   => { Self::change_before_impl(stream, t) },
+            ValueChangeStream::Real(stream)   => { Self::change_before_impl(stream, t) },
+            ValueChangeStream::String(stream) => { Self::change_before_impl(stream, t) },
+            ValueChangeStream::Unknown => { None },
+        }
+    }
+
+    pub fn change_before_impl<T>(history: &Vec<ValueChange<T>>, t: u64) -> Option<usize>
+        where T: std::fmt::Debug + Clone + PartialEq
+    {
+        if let Some(first) = history.first() {
             if t < first.time {
                 return None;
             }
@@ -101,11 +105,11 @@ impl ValueChangeStream {
         }
 
         let mut lower = 0;
-        let mut upper = self.history.len();
+        let mut upper = history.len();
         while 1 < upper - lower {
             assert!(lower <= upper);
             let mid = (upper + lower) / 2;
-            let t_mid = self.history[mid].time;
+            let t_mid = history[mid].time;
             if t_mid < t {
                 lower = mid;
             } else if t < t_mid {
@@ -118,9 +122,20 @@ impl ValueChangeStream {
         Some(lower)
     }
 
-    /// exclusive
     pub fn change_after(&self, t: u64) -> Option<usize> {
-        if let Some(last) = self.history.last() {
+        match self {
+            ValueChangeStream::Bits(stream)   => { Self::change_after_impl(stream, t) },
+            ValueChangeStream::Real(stream)   => { Self::change_after_impl(stream, t) },
+            ValueChangeStream::String(stream) => { Self::change_after_impl(stream, t) },
+            ValueChangeStream::Unknown => { None },
+        }
+    }
+
+    /// exclusive
+    pub fn change_after_impl<T>(history: &Vec<ValueChange<T>>, t: u64) -> Option<usize>
+        where T: std::fmt::Debug + Clone + PartialEq
+    {
+        if let Some(last) = history.last() {
             if last.time < t {
                 return None;
             }
@@ -129,11 +144,11 @@ impl ValueChangeStream {
         }
 
         let mut lower = 0;
-        let mut upper = self.history.len();
+        let mut upper = history.len();
         while 1 < upper - lower {
             assert!(lower <= upper);
             let mid = (upper + lower) / 2;
-            let t_mid = self.history[mid].time;
+            let t_mid = history[mid].time;
             if t_mid < t {
                 lower = mid;
             } else if t < t_mid {
