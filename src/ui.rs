@@ -190,7 +190,7 @@ pub fn list_values(app: &app::TuiWave, s: &Scope, path: &String) -> Vec<(String,
 fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 
     let values = list_values(&app, &app.ts.scope, &app.ts.scope.name);
-    let line_to = (app.line_from + app.current_drawable_lines-1).min(values.len());
+    let line_to = (app.line_from + app.layout.drawable_lines-1).min(values.len());
     let lines = format_values(&app, &values[app.line_from..line_to]);
 
     // the first line has all (including top and bottom) borders so takes 3 lines.
@@ -285,8 +285,8 @@ fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         let sublayout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(Constraint::from_percentages([
-                app.current_signame_width_percent,
-                100 - app.current_signame_width_percent
+                app.layout.signame_width_percent,
+                100 - app.layout.signame_width_percent
             ]))
             .split(layout[idx]);
 
@@ -331,8 +331,8 @@ pub fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
     let layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(Constraint::from_percentages([
-            app.current_sidebar_width_percent,
-            100 - app.current_sidebar_width_percent
+            app.layout.sidebar_width_percent,
+            100 - app.layout.sidebar_width_percent
         ]))
         .split(frame.size());
 

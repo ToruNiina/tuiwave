@@ -5,6 +5,13 @@ use crossterm::event::{
     KeyCode, KeyModifiers, KeyEventState
 };
 
+pub struct Layout {
+    pub drawable_lines: usize,
+    pub stream_width: u64,
+    pub sidebar_width_percent: u16,
+    pub signame_width_percent: u16,
+}
+
 pub struct TuiWave {
     pub ts: TimeSeries,
     pub t_from: u64,
@@ -13,16 +20,19 @@ pub struct TuiWave {
     pub width: u64,
     pub line_from: usize,
     pub line_focused: usize,
-    pub current_drawable_lines: usize,
-    pub current_stream_width: u64,
-    pub current_sidebar_width_percent: u16,
-    pub current_signame_width_percent: u16,
+    pub layout: Layout,
     pub should_quit: bool,
 }
 
 impl TuiWave {
     pub fn new(ts: TimeSeries) -> Self {
         let t_last = ts.values.iter().map(|v| v.last_change_time()).max().unwrap_or(0);
+        let layout = Layout{
+            drawable_lines: 0,
+            stream_width: t_last + 1,
+            sidebar_width_percent: 15,
+            signame_width_percent: 15,
+        };
         Self{
             ts,
             t_from: 0,
@@ -31,10 +41,7 @@ impl TuiWave {
             width: 4,
             line_from: 0,
             line_focused: 0,
-            current_drawable_lines: 0,
-            current_stream_width: t_last + 1,
-            current_sidebar_width_percent: 15,
-            current_signame_width_percent: 15,
+            layout,
             should_quit: false
         }
     }
@@ -42,12 +49,12 @@ impl TuiWave {
     pub fn setup_with_terminal_size(&mut self, termsize: Rect) {
         let n_lines = termsize.height as usize / 2;
         let n_lines = if termsize.height % 2 == 1 { n_lines } else { n_lines - 1 };
-        self.current_drawable_lines = n_lines;
+        self.layout.drawable_lines = n_lines;
 
-        let main_pane = termsize.width * (100 - self.current_sidebar_width_percent) / 100;
-        self.current_stream_width = (main_pane * (100 - self.current_signame_width_percent) / 100) as u64;
+        let main_pane = termsize.width * (100 - self.layout.sidebar_width_percent) / 100;
+        self.layout.stream_width = (main_pane * (100 - self.layout.signame_width_percent) / 100) as u64;
 
-        self.t_to = (self.current_stream_width / self.width) + self.t_from;
+        self.t_to = (self.layout.stream_width / self.width) + self.t_from;
         self.t_to = self.t_to.min(self.t_last+1)
     }
 
@@ -65,8 +72,8 @@ impl TuiWave {
         } else if key == KeyCode::Char('j') || key == KeyCode::Down {
             self.line_focused = (self.line_focused + 1).min(self.ts.values.len().saturating_sub(1));
 
-            if (self.current_drawable_lines + self.line_from).saturating_sub(1) < self.line_focused {
-                self.line_from = self.line_focused - self.current_drawable_lines + 1;
+            if (self.layout.drawable_lines + self.line_from).saturating_sub(1) < self.line_focused {
+                self.line_from = self.line_focused - self.layout.drawable_lines + 1;
             }
         } else if key == KeyCode::Char('k') || key == KeyCode::Up {
             self.line_focused = self.line_focused.saturating_sub(1);
@@ -98,6 +105,6 @@ impl TuiWave {
         if (n_lines + self.line_from).saturating_sub(1) < self.line_focused {
             self.line_from = self.line_focused - n_lines + 1;
         }
-        self.current_drawable_lines = n_lines;
+        self.layout.drawable_lines = n_lines;
     }
 }
