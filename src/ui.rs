@@ -48,7 +48,7 @@ fn format_time_series_bits(timeline: &ValueChangeStreamImpl<Bits>, t_from: u64, 
             let (mut txt, sty) = match current_v {
                 Bits::B(x) => {
                     if x {
-                        ("▔".repeat(w), style_bit)
+                        ("▇".repeat(w), style_bit)
                     } else {
                         ("▁".repeat(w), style_bit)
                     }
@@ -76,9 +76,9 @@ fn format_time_series_bits(timeline: &ValueChangeStreamImpl<Bits>, t_from: u64, 
             match change.new_value {
                 Bits::B(x) => {
                     if x {
-                        spans.push(Span::styled("／".to_string(), style_bit));
+                        spans.push(Span::styled("▇".to_string(), style_bit));
                     } else {
-                        spans.push(Span::styled("＼".to_string(), style_bit));
+                        spans.push(Span::styled("▁".to_string(), style_bit));
                     }
                 }
                 Bits::V(_) => {
