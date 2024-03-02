@@ -1,5 +1,5 @@
 use crate::timeseries::*;
-use crate::log::dump;
+// use crate::log::dump;
 
 use anyhow::Context;
 
@@ -19,7 +19,7 @@ pub fn append_to_scope(scope: &mut Scope, values: &mut Vec<ValueChangeStream>, i
                     vcd::VarType::Real   => { values.push(ValueChangeStream::Real(ValueChangeStreamImpl::new()))},
                     vcd::VarType::String => { values.push(ValueChangeStream::String(ValueChangeStreamImpl::new()))},
                     _ => {
-                        dump(format!("unsupported type {:?} found", v.var_type));
+                        // dump(format!("unsupported type {:?} found", v.var_type));
                         values.push(ValueChangeStream::Unknown)
                     }
                 };
@@ -46,7 +46,7 @@ pub fn append_to_scope(scope: &mut Scope, values: &mut Vec<ValueChangeStream>, i
                 // already did
             }
             _ => {
-                dump(format!("Skip: {:?}", item));
+                // dump(format!("Skip: {:?}", item));
             }
         }
     }
@@ -147,7 +147,7 @@ pub fn load_vcd<R: std::io::BufRead>(src: R) -> anyhow::Result<TimeSeries> {
                 }
             }
             _ => {
-                dump(format!("not supported command: {:?}", cmd));
+                // dump(format!("not supported command: {:?}", cmd));
             }
         };
     }
