@@ -167,11 +167,16 @@ impl ValueChangeStream {
 pub struct Scope {
     pub name: String,
     pub items: Vec<ScopeItem>,
+    pub open: bool, // open in sidebar tree (UI)
 }
 
 impl Scope {
     pub fn new(name: &str) -> Self {
-        Self{ name: name.to_string(), items: Vec::new() }
+        Self{ name: name.to_string(), items: Vec::new(), open: true }
+    }
+
+    pub fn should_be_rendered(&self) -> bool {
+        self.items.iter().map(|x| x.should_be_rendered()).reduce(|acc, e| acc || e).unwrap_or(false)
     }
 }
 
@@ -179,10 +184,15 @@ impl Scope {
 pub struct ScopeValue {
     pub name: String,
     pub index: usize,
+    pub render: bool, // (UI)
 }
 impl ScopeValue {
     pub fn new(name: &str, index: usize) -> Self {
-        ScopeValue{ name: name.to_string(), index }
+        ScopeValue{ name: name.to_string(), index, render: true }
+    }
+
+    pub fn should_be_rendered(&self) -> bool {
+        self.render
     }
 }
 
@@ -190,6 +200,15 @@ impl ScopeValue {
 pub enum ScopeItem {
     Scope(Scope),
     Value(ScopeValue),
+}
+
+impl ScopeItem {
+    pub fn should_be_rendered(&self) -> bool {
+        match self {
+            ScopeItem::Scope(s) => {s.should_be_rendered()},
+            ScopeItem::Value(v) => {v.should_be_rendered()},
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
