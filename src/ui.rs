@@ -187,9 +187,8 @@ pub fn list_values(app: &app::TuiWave, s: &Scope, path: &String) -> Vec<(String,
     vs
 }
 
-fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
+fn draw_timeline(app: &app::TuiWave, values: &Vec<(String, usize)>, frame: &mut Frame, chunk: &Rect) {
 
-    let values = list_values(&app, &app.ts.scope, &app.ts.scope.name);
     let line_to = (app.line_from + app.layout.drawable_lines-1).min(values.len());
     let lines = format_values(&app, &values[app.line_from..line_to]);
 
@@ -383,6 +382,6 @@ pub fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
             sidebar[idx]);
     }
 
-    draw_timeline(app, frame, &root[1]);
+    draw_timeline(app, &values, frame, &root[1]);
 }
 
