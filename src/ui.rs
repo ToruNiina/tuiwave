@@ -127,7 +127,7 @@ fn format_time_series_bits(timeline: &ValueChangeStreamImpl<Bits>, t_from: u64, 
         let (txt, sty) = match current_v {
             Bits::B(x) => {
                 if x {
-                    ("▔".repeat(w), style_bit)
+                    ("▇".repeat(w), style_bit)
                 } else {
                     ("▁".repeat(w), style_bit)
                 }
