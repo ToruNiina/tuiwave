@@ -47,20 +47,17 @@ fn main() -> anyhow::Result<()> {
         return Err(anyhow::anyhow!("missing file"));
     }
 
-    let f = std::fs::File::open(&args[1])?;
-    let ts = load_vcd::load_vcd(std::io::BufReader::new(f))?;
-    let mut app = TuiWave::new(ts);
-
     startup()?;
 
     let mut terminal = ratatui::terminal::Terminal::new(
         ratatui::backend::CrosstermBackend::new(std::io::stdout()))?;
     terminal.clear()?;
 
-    let termsize = terminal.size()?;
-    let n_lines = termsize.height as usize / 2;
-    let n_lines = if termsize.height % 2 == 1 { n_lines } else { n_lines - 1 };
-    app.current_drawable_lines = n_lines;
+    let f = std::fs::File::open(&args[1])?;
+    let ts = load_vcd::load_vcd(std::io::BufReader::new(f))?;
+
+    let mut app = TuiWave::new(ts);
+    app.setup_with_terminal_size(terminal.size()?);
 
     loop {
         update(&mut app)?;
