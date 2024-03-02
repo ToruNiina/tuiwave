@@ -10,14 +10,15 @@ pub struct Layout {
     pub stream_width: u64,
     pub sidebar_width_percent: u16,
     pub signame_width_percent: u16,
+    pub timedelta_width: u64,
 }
 
 pub struct TuiWave {
     pub ts: TimeSeries,
+
     pub t_from: u64,
     pub t_to:   u64,
     pub t_last: u64,
-    pub width: u64,
     pub line_from: usize,
     pub line_focused: usize,
     pub layout: Layout,
@@ -32,13 +33,13 @@ impl TuiWave {
             stream_width: t_last + 1,
             sidebar_width_percent: 15,
             signame_width_percent: 15,
+            timedelta_width: 4,
         };
         Self{
             ts,
             t_from: 0,
             t_to: t_last+1,
             t_last,
-            width: 4,
             line_from: 0,
             line_focused: 0,
             layout,
@@ -54,7 +55,7 @@ impl TuiWave {
         let main_pane = termsize.width * (100 - self.layout.sidebar_width_percent) / 100;
         self.layout.stream_width = (main_pane * (100 - self.layout.signame_width_percent) / 100) as u64;
 
-        self.t_to = (self.layout.stream_width / self.width) + self.t_from;
+        self.t_to = (self.layout.stream_width / self.layout.timedelta_width) + self.t_from;
         self.t_to = self.t_to.min(self.t_last+1)
     }
 
@@ -81,9 +82,9 @@ impl TuiWave {
                 self.line_from = self.line_focused;
             }
         } else if key == KeyCode::Char('-') {
-            self.width = self.width.saturating_sub(1).max(2);
+            self.layout.timedelta_width = self.layout.timedelta_width.saturating_sub(1).max(2);
         } else if key == KeyCode::Char('+') {
-            self.width = self.width.saturating_add(1).max(2);
+            self.layout.timedelta_width = self.layout.timedelta_width.saturating_add(1).max(2);
         } else if key == KeyCode::Char('0') {
             let dt = self.t_to.saturating_sub(self.t_from);
             self.t_to   = dt;

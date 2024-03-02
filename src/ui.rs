@@ -157,7 +157,7 @@ pub fn format_values<'a>(app: &'a app::TuiWave, values: &[(String, usize)])
             &app.ts.values[*idx],
             app.t_from,
             app.t_to.min(app.t_last+1),
-            app.width);
+            app.layout.timedelta_width);
         lines.push( (path.clone(), line) );
     }
     lines
