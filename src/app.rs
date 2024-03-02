@@ -20,10 +20,9 @@ impl TuiWave {
     pub fn new(ts: TimeSeries) -> Self {
         let mut t_last = 0;
         for vs in ts.values.iter() {
-            for change in vs.history.iter() {
-                if t_last < change.time {
-                    t_last = change.time;
-                }
+            let last_t = vs.last_change_time();
+            if t_last < last_t {
+                t_last = last_t;
             }
         }
         Self{ ts, t_from: 0, t_to: t_last+1, t_last, width: 4, line_from: 0, line_focused: 0, current_drawable_lines: 0, should_quit: false}
