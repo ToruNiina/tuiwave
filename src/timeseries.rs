@@ -35,7 +35,7 @@ impl Bits {
             return Bits::B(false);
         }
         if w == 1 {
-            return match value.get(0) {
+            return match value.get(0).unwrap() {
                 vcd::Value::V0 => { Bits::B(false) },
                 vcd::Value::V1 => { Bits::B(true)  },
                 vcd::Value::X  => { Bits::X },
