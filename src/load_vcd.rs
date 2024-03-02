@@ -13,8 +13,10 @@ pub fn append_to_scope(scope: &mut Scope, values: &mut Vec<ValueChangeStream>, i
                 let idx = values.len(); // save current idx before push
 
                 match v.var_type {
-                    vcd::VarType::Wire => { values.push(ValueChangeStream::Bits(ValueChangeStreamImpl::new()))},
-                    vcd::VarType::Reg  => { values.push(ValueChangeStream::Bits(ValueChangeStreamImpl::new()))},
+                    vcd::VarType::Wire   => { values.push(ValueChangeStream::Bits(ValueChangeStreamImpl::new()))},
+                    vcd::VarType::Reg    => { values.push(ValueChangeStream::Bits(ValueChangeStreamImpl::new()))},
+                    vcd::VarType::Real   => { values.push(ValueChangeStream::Real(ValueChangeStreamImpl::new()))},
+                    vcd::VarType::String => { values.push(ValueChangeStream::String(ValueChangeStreamImpl::new()))},
                     _ => {
                         eprintln!("unsupported type {:?} found", v.var_type);
                         values.push(ValueChangeStream::Unknown)
