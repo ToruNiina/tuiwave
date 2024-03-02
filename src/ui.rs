@@ -324,6 +324,23 @@ fn draw_timeline(app: &app::TuiWave, values: &Vec<(String, usize)>, frame: &mut 
     }
 }
 
+pub fn draw_sidebar(app: &app::TuiWave, values: &Vec<(String, usize)>, frame: &mut Frame, chunk: &Rect) {
+
+    let mut value_list = Vec::new();
+
+    for (name, _) in values.iter() {
+        value_list.push(Line::raw(name));
+    }
+
+    frame.render_widget(
+        Paragraph::new(Text::from(value_list)).block(
+            Block::new()
+            .borders(Borders::ALL)
+            .border_style(Style::new().fg(Color::DarkGray))
+        ),
+        *chunk);
+}
+
 pub fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
 
     // add side bar showing a list of signals
@@ -337,19 +354,6 @@ pub fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
 
     let values = list_values(&app, &app.ts.scope, &app.ts.scope.name);
 
-    let mut value_list = Vec::new();
-
-    for (name, _) in values.iter() {
-        value_list.push(Line::raw(name));
-    }
-    frame.render_widget(
-        Paragraph::new(Text::from(value_list)).block(
-            Block::new()
-            .borders(Borders::ALL)
-            .border_style(Style::new().fg(Color::DarkGray))
-        ),
-        root[0]);
-
+    draw_sidebar(app, &values, frame, &root[0]);
     draw_timeline(app, &values, frame, &root[1]);
 }
-
