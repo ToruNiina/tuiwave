@@ -1,5 +1,4 @@
 use crate::timeseries::*;
-use crate::ui::list_values;
 
 use ratatui::layout::Rect;
 
@@ -40,6 +39,37 @@ pub struct TuiWave {
     pub line_focused: usize,
     pub layout: Layout,
     pub should_quit: bool,
+}
+
+fn list_values(app: &TuiWave, s: &Scope, path: &String)
+    -> Vec<(String, usize)>
+{
+    let mut vs = Vec::new();
+    for item in s.items.iter() {
+        if let ScopeItem::Value(v) = item {
+            if !v.should_be_rendered() {
+                continue;
+            }
+            let mut path_to_item = path.clone();
+            path_to_item += ".";
+            path_to_item += &v.name;
+            vs.push((path_to_item, v.index));
+        }
+    }
+    for item in s.items.iter() {
+        if let ScopeItem::Scope(subscope) = item {
+            if !subscope.should_be_rendered() {
+                continue;
+            }
+            let mut path_to_item = path.clone();
+            path_to_item += ".";
+            path_to_item += &subscope.name;
+
+            let subvs = list_values(app, subscope, &path_to_item);
+            vs.extend(subvs.into_iter());
+        }
+    }
+    vs
 }
 
 impl TuiWave {

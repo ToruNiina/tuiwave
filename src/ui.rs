@@ -163,36 +163,6 @@ pub fn format_values<'a>(app: &'a app::TuiWave, values: &[(String, usize)])
     lines
 }
 
-pub fn list_values(app: &app::TuiWave, s: &Scope, path: &String) -> Vec<(String, usize)>
-{
-    let mut vs = Vec::new();
-    for item in s.items.iter() {
-        if let ScopeItem::Value(v) = item {
-            if !v.should_be_rendered() {
-                continue;
-            }
-            let mut path_to_item = path.clone();
-            path_to_item += ".";
-            path_to_item += &v.name;
-            vs.push((path_to_item, v.index));
-        }
-    }
-    for item in s.items.iter() {
-        if let ScopeItem::Scope(subscope) = item {
-            if !subscope.should_be_rendered() {
-                continue;
-            }
-            let mut path_to_item = path.clone();
-            path_to_item += ".";
-            path_to_item += &subscope.name;
-
-            let subvs = list_values(app, subscope, &path_to_item);
-            vs.extend(subvs.into_iter());
-        }
-    }
-    vs
-}
-
 fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 
     let values = &app.selected_values;
