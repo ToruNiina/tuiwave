@@ -13,8 +13,8 @@ pub fn append_to_scope(scope: &mut Scope, values: &mut Vec<ValueChangeStream>, i
                 let idx = values.len(); // save current idx before push
 
                 match v.var_type {
-                    vcd::VarType::Wire => { values.push(ValueChangeStream::Bits(Vec::new()))},
-                    vcd::VarType::Reg  => { values.push(ValueChangeStream::Bits(Vec::new()))},
+                    vcd::VarType::Wire => { values.push(ValueChangeStream::Bits(ValueChangeStreamImpl::new()))},
+                    vcd::VarType::Reg  => { values.push(ValueChangeStream::Bits(ValueChangeStreamImpl::new()))},
                     _ => {
                         eprintln!("unsupported type {:?} found", v.var_type);
                         values.push(ValueChangeStream::Unknown)
@@ -93,12 +93,12 @@ pub fn load_vcd<R: std::io::BufRead>(src: R) -> anyhow::Result<TimeSeries> {
                 let idx = map.get(&i).with_context(|| format!("ID {} NotFound", i))?;
                 // idxmut does not work here
                 if let ValueChangeStream::Bits(xs) = ts.values.get_mut(*idx).unwrap() {
-                    if let Some(last) = xs.last() {
+                    if let Some(last) = xs.stream.last() {
                         if last.time == current_t {
-                            xs.pop();
+                            xs.stream.pop();
                         }
                     }
-                    xs.push(ValueChange::new(current_t, Bits::from_vcd_scalar(v)));
+                    xs.stream.push(ValueChange::new(current_t, Bits::from_vcd_scalar(v)));
                 } else {
                     assert!(false, "type error");
                 }
@@ -106,12 +106,12 @@ pub fn load_vcd<R: std::io::BufRead>(src: R) -> anyhow::Result<TimeSeries> {
             vcd::Command::ChangeVector(i, v) => {
                 let idx = map.get(&i).with_context(|| format!("ID {} NotFound", i))?;
                 if let ValueChangeStream::Bits(xs) = ts.values.get_mut(*idx).unwrap() {
-                    if let Some(last) = xs.last() {
+                    if let Some(last) = xs.stream.last() {
                         if last.time == current_t {
-                            xs.pop();
+                            xs.stream.pop();
                         }
                     }
-                    xs.push(ValueChange::new(current_t, Bits::from_vcd_vector(v)));
+                    xs.stream.push(ValueChange::new(current_t, Bits::from_vcd_vector(v)));
                 } else {
                     assert!(false, "type error");
                 }
@@ -119,12 +119,12 @@ pub fn load_vcd<R: std::io::BufRead>(src: R) -> anyhow::Result<TimeSeries> {
             vcd::Command::ChangeReal(i, v) => {
                 let idx = map.get(&i).with_context(|| format!("ID {} NotFound", i))?;
                 if let ValueChangeStream::Real(xs) = ts.values.get_mut(*idx).unwrap() {
-                    if let Some(last) = xs.last() {
+                    if let Some(last) = xs.stream.last() {
                         if last.time == current_t {
-                            xs.pop();
+                            xs.stream.pop();
                         }
                     }
-                    xs.push(ValueChange::new(current_t, v));
+                    xs.stream.push(ValueChange::new(current_t, v));
                 } else {
                     assert!(false, "type error");
                 }
@@ -132,12 +132,12 @@ pub fn load_vcd<R: std::io::BufRead>(src: R) -> anyhow::Result<TimeSeries> {
             vcd::Command::ChangeString(i, v) => {
                 let idx = map.get(&i).with_context(|| format!("ID {} NotFound", i))?;
                 if let ValueChangeStream::String(xs) = ts.values.get_mut(*idx).unwrap() {
-                    if let Some(last) = xs.last() {
+                    if let Some(last) = xs.stream.last() {
                         if last.time == current_t {
-                            xs.pop();
+                            xs.stream.pop();
                         }
                     }
-                    xs.push(ValueChange::new(current_t, v));
+                    xs.stream.push(ValueChange::new(current_t, v));
                 } else {
                     assert!(false, "type error");
                 }
