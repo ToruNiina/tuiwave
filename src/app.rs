@@ -180,6 +180,10 @@ impl TuiWave {
         }
         *i += 1;
 
+        if !node.open {
+            return false;
+        }
+
         for item in node.items.iter_mut() {
             if let ScopeItem::Value(v) = item {
                 if *i == flipped {
@@ -257,6 +261,9 @@ impl UICache {
     }
 
     fn draw_scope_tree_impl(s: &Scope, lines: &mut Vec<String>, indent: String) {
+        if ! s.open {
+            return ;
+        }
 
         let n_values: usize = s.items.iter().map(|x| {
             if let ScopeItem::Value(_) = x { 1 } else { 0 }

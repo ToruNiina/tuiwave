@@ -316,7 +316,6 @@ fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 
     let tree = &app.cache.scope_tree_lines;
 
-    // let lines = Text::from(tree.iter().map(|x| Line::raw(x)).collect::<Vec<_>>());
     let mut lines = Vec::new();
     for (i, s) in tree.iter().enumerate() {
         let sty = if i == app.focus_tree {
