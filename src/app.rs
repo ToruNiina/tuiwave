@@ -31,6 +31,7 @@ impl Layout {
 pub struct TuiWave {
     pub ts: TimeSeries,
     pub selected_values: Vec<(String, usize)>,
+    pub scope_tree_lines: Vec<String>,
 
     pub t_from: u64,
     pub t_to:   u64,
@@ -70,6 +71,46 @@ fn list_values(s: &Scope, path: &String) -> Vec<(String, usize)> {
     vs
 }
 
+fn draw_scope_tree_impl(s: &Scope, lines: &mut Vec<String>, indent: String) {
+
+    let n_values: usize = s.items.iter().map(|x| {
+        if let ScopeItem::Value(_) = x { 1 } else { 0 }
+    }).sum();
+
+    let n_scopes: usize = s.items.iter().map(|x| {
+        if let ScopeItem::Scope(_) = x { 1 } else { 0 }
+    }).sum();
+
+    let mut c_values = 0;
+    for item in s.items.iter() {
+        let is_last = (n_scopes == 0) && (c_values + 1) == n_values;
+        if let ScopeItem::Value(v) = item {
+            let cbox = if v.should_be_rendered() { "☑"  } else { "☐"  };
+            let branch = if is_last { "└" } else { "├" };
+            lines.push(format!("{}{}╴{} {}", indent, branch, cbox, v.name));
+            c_values += 1;
+        }
+    }
+
+    let mut c_scopes = 0;
+    for item in s.items.iter() {
+        let is_last = (c_scopes + 1) == n_scopes;
+        if let ScopeItem::Scope(subscope) = item {
+            let branch = if is_last { "└" } else { "├" };
+            let next_indent = indent.clone() + (if is_last { "  " } else { "│ " });
+            lines.push(format!("{}{}╴{}", indent, branch, subscope.name));
+
+            draw_scope_tree_impl(subscope, lines, next_indent);
+            c_scopes += 1;
+        }
+    }
+}
+fn draw_scope_tree(app: &TuiWave) -> Vec<String> {
+    let mut tree = vec![app.ts.scope.name.clone()];
+    draw_scope_tree_impl(&app.ts.scope, &mut tree, "".to_string());
+    tree
+}
+
 impl TuiWave {
     pub fn new(ts: TimeSeries) -> Self {
         let t_last = ts.values.iter().map(|v| v.last_change_time()).max().unwrap_or(0);
@@ -85,6 +126,7 @@ impl TuiWave {
         Self{
             ts,
             selected_values: Vec::new(),
+            scope_tree_lines: Vec::new(),
             t_from: 0,
             t_to: t_last+1,
             t_last,
@@ -108,6 +150,7 @@ impl TuiWave {
         self.setup_drawable_time_range();
 
         self.selected_values = list_values(&self.ts.scope, &self.ts.scope.name);
+        self.scope_tree_lines = draw_scope_tree(&self);
     }
 
     pub fn key_press(&mut self, key: KeyCode, _modifiers: KeyModifiers, _state: KeyEventState) {

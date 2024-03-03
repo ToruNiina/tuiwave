@@ -302,45 +302,7 @@ fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
     }
 }
 
-fn draw_scope_tree_impl(s: &Scope, lines: &mut Vec<String>, indent: String) {
 
-    let n_values: usize = s.items.iter().map(|x| {
-        if let ScopeItem::Value(_) = x { 1 } else { 0 }
-    }).sum();
-
-    let n_scopes: usize = s.items.iter().map(|x| {
-        if let ScopeItem::Scope(_) = x { 1 } else { 0 }
-    }).sum();
-
-    let mut c_values = 0;
-    for item in s.items.iter() {
-        let is_last = (n_scopes == 0) && (c_values + 1) == n_values;
-        if let ScopeItem::Value(v) = item {
-            let cbox = if v.should_be_rendered() { "☑"  } else { "☐"  };
-            let branch = if is_last { "└" } else { "├" };
-            lines.push(format!("{}{}╴{} {}", indent, branch, cbox, v.name));
-            c_values += 1;
-        }
-    }
-
-    let mut c_scopes = 0;
-    for item in s.items.iter() {
-        let is_last = (c_scopes + 1) == n_scopes;
-        if let ScopeItem::Scope(subscope) = item {
-            let branch = if is_last { "└" } else { "├" };
-            let next_indent = indent.clone() + (if is_last { "  " } else { "│ " });
-            lines.push(format!("{}{}╴{}", indent, branch, subscope.name));
-
-            draw_scope_tree_impl(subscope, lines, next_indent);
-            c_scopes += 1;
-        }
-    }
-}
-fn draw_scope_tree(app: &app::TuiWave) -> Vec<String> {
-    let mut tree = vec![app.ts.scope.name.clone()];
-    draw_scope_tree_impl(&app.ts.scope, &mut tree, "".to_string());
-    tree
-}
 
 fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 
@@ -354,7 +316,7 @@ fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         ])
         .split(*chunk);
 
-    let tree = draw_scope_tree(app);
+    let tree = &app.scope_tree_lines;
 
     frame.render_widget(
         Paragraph::new(
