@@ -42,8 +42,6 @@ pub struct TuiWave {
     pub should_quit: bool,
 }
 
-
-
 impl TuiWave {
     pub fn new(ts: TimeSeries) -> Self {
         let t_last = ts.values.iter().map(|v| v.last_change_time()).max().unwrap_or(0);
@@ -56,7 +54,7 @@ impl TuiWave {
             current_width: 0,
             current_height: 0,
         };
-        Self{
+        let mut s = Self{
             ts,
             selected_values: Vec::new(),
             scope_tree_lines: Vec::new(),
@@ -67,7 +65,10 @@ impl TuiWave {
             line_focused: 0,
             layout,
             should_quit: false
-        }
+        };
+        s.selected_values  = s.list_values();
+        s.scope_tree_lines = s.draw_scope_tree();
+        s
     }
 
     // call it after resizing the window, or changed the rayout parameters
@@ -82,8 +83,6 @@ impl TuiWave {
         self.layout.resize(termsize.width, termsize.height);
         self.setup_drawable_time_range();
 
-        self.selected_values = self.list_values();
-        self.scope_tree_lines = self.draw_scope_tree();
     }
 
     pub fn key_press(&mut self, key: KeyCode, _modifiers: KeyModifiers, _state: KeyEventState) {
