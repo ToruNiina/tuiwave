@@ -28,6 +28,12 @@ impl Layout {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Focus {
+    Signal,
+    Tree,
+}
+
 pub struct TuiWave {
     pub ts: TimeSeries,
     pub cache: UICache,
@@ -35,11 +41,13 @@ pub struct TuiWave {
     pub t_to:   u64,
     pub t_last: u64,
     pub line_from: usize,
-    pub line_focused: usize,
     pub layout: Layout,
     pub should_quit: bool,
     pub window_change_mode: bool,
-    pub focus_sidebar: bool
+
+    pub focus: Focus,
+    pub focus_signal: usize,
+    pub focus_tree: usize,
 }
 
 impl TuiWave {
@@ -63,11 +71,12 @@ impl TuiWave {
             t_to: t_last+1,
             t_last,
             line_from: 0,
-            line_focused: 0,
             layout,
             should_quit: false,
             window_change_mode: false,
-            focus_sidebar: false,
+            focus: Focus::Signal,
+            focus_signal: 0,
+            focus_tree: 0,
         }
     }
 
@@ -90,35 +99,36 @@ impl TuiWave {
             self.should_quit = true;
         } else if key == KeyCode::Char('l') || key == KeyCode::Right {
             if self.window_change_mode {
-                self.focus_sidebar = false;
+                self.focus = Focus::Signal;
                 self.window_change_mode = false;
-            } else if !self.focus_sidebar {
+            } else if self.focus == Focus::Signal {
                 self.t_from = self.t_from.saturating_add(1);
                 self.t_to   = self.t_to  .saturating_add(1);
             }
         } else if key == KeyCode::Char('h') || key == KeyCode::Left {
             if self.window_change_mode {
-                self.focus_sidebar = true;
+                self.focus = Focus::Tree;
                 self.window_change_mode = false;
-            } else if !self.focus_sidebar {
+            } else if self.focus == Focus::Signal {
                 if self.t_from != 0 {
                     self.t_from = self.t_from.saturating_sub(1);
                     self.t_to   = self.t_to  .saturating_sub(1);
                 }
             }
         } else if key == KeyCode::Char('j') || key == KeyCode::Down {
-            if !self.focus_sidebar  {
-                self.line_focused = (self.line_focused + 1).min(self.ts.values.len().saturating_sub(1));
+            if let Focus::Signal = self.focus {
+                self.focus_signal =
+                    (self.focus_signal + 1).min(self.ts.values.len().saturating_sub(1));
 
-                if (self.layout.drawable_lines + self.line_from).saturating_sub(1) < self.line_focused {
-                    self.line_from = self.line_focused - self.layout.drawable_lines + 1;
+                if (self.layout.drawable_lines + self.line_from).saturating_sub(1) < self.focus_signal {
+                    self.line_from = self.focus_signal - self.layout.drawable_lines + 1;
                 }
             }
         } else if key == KeyCode::Char('k') || key == KeyCode::Up {
-            if !self.focus_sidebar  {
-                self.line_focused = self.line_focused.saturating_sub(1);
-                if self.line_focused < self.line_from {
-                    self.line_from = self.line_focused;
+            if let Focus::Signal = self.focus {
+                self.focus_signal = self.focus_signal.saturating_sub(1);
+                if self.focus_signal < self.line_from {
+                    self.line_from = self.focus_signal;
                 }
             }
         } else if key == KeyCode::Char('-') {
@@ -146,14 +156,13 @@ impl TuiWave {
         let n_lines = h as usize / 2;
         let n_lines = if h % 2 == 1 { n_lines } else { n_lines - 1 };
 
-        if self.line_focused < self.line_from {
-            self.line_from = self.line_focused;
+        if self.focus_signal < self.line_from {
+            self.line_from = self.focus_signal;
         }
-        if (n_lines + self.line_from).saturating_sub(1) < self.line_focused {
-            self.line_from = self.line_focused - n_lines + 1;
+        if (n_lines + self.line_from).saturating_sub(1) < self.focus_signal {
+            self.line_from = self.focus_signal - n_lines + 1;
         }
     }
-
 }
 
 pub struct UICache {
