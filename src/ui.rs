@@ -267,8 +267,8 @@ fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
             ]))
             .split(layout[idx]);
 
-        let is_focused = idx == app.line_focused;
-        let next_focused = !is_last && (idx+1) == app.line_focused;
+        let is_focused = (idx == app.line_focused) && !app.focus_sidebar;
+        let next_focused = !is_last && (idx+1) == app.line_focused && !app.focus_sidebar;
 
         frame.render_widget(
             Paragraph::new(path.clone())
