@@ -8,7 +8,7 @@ use ratatui::terminal::Frame;
 use ratatui::layout::{Layout, Constraint, Direction, Rect};
 use ratatui::widgets::{Block, Borders, Paragraph};
 
-fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64, width: u64) -> Line {
+fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64, width: u64) -> Vec<(String, Style)> {
     if let ValueChangeStream::Bits(ts) = timeline {
         return format_time_series_bits(ts, t_from, t_to, width);
     } else {
@@ -16,7 +16,7 @@ fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64, widt
     }
 }
 
-fn format_time_series_bits(timeline: &ValueChangeStreamImpl<Bits>, t_from: u64, t_to: u64, width: u64) -> Line {
+fn format_time_series_bits(timeline: &ValueChangeStreamImpl<Bits>, t_from: u64, t_to: u64, width: u64) -> Vec<(String, Style)> {
     let mut current_t = t_from;
     let mut current_v = Bits::Z;
 
@@ -70,46 +70,46 @@ fn format_time_series_bits(timeline: &ValueChangeStreamImpl<Bits>, t_from: u64, 
             if txt.chars().count() > w {
                 txt = txt.chars().take(w).collect();
             }
-            spans.push(Span::styled(txt, sty));
+            spans.push((txt, sty));
 
             // total_width += 2;
             match change.new_value {
                 Bits::B(x) => {
                     if x {
-                        spans.push(Span::styled("▇".to_string(), style_bit));
+                        spans.push(("▇".to_string(), style_bit));
                     } else {
-                        spans.push(Span::styled("▁".to_string(), style_bit));
+                        spans.push(("▁".to_string(), style_bit));
                     }
                 }
                 Bits::V(_) => {
-                    spans.push(Span::styled("".to_string(),
+                    spans.push(("".to_string(),
                         Style::new().fg(Color::LightGreen).bg(Color::Black)
                     ));
                 }
                 Bits::X => {
                     if currently_bad {
-                        spans.push(Span::styled("".to_string(),
+                        spans.push(("".to_string(),
                             Style::new().fg(Color::LightRed).bg(Color::Black)
                         ));
                     } else {
-                        spans.push(Span::styled("".to_string(),
+                        spans.push(("".to_string(),
                             Style::new().fg(Color::LightGreen).bg(Color::Black)
                         ));
-                        spans.push(Span::styled("".to_string(),
+                        spans.push(("".to_string(),
                             Style::new().fg(Color::LightRed).bg(Color::Black)
                         ));
                     }
                 }
                 Bits::Z => {
                     if currently_bad {
-                        spans.push(Span::styled("".to_string(),
+                        spans.push(("".to_string(),
                             Style::new().fg(Color::LightRed).bg(Color::Black)
                         ));
                     } else {
-                        spans.push(Span::styled("".to_string(),
+                        spans.push(("".to_string(),
                             Style::new().fg(Color::LightGreen).bg(Color::Black)
                         ));
-                        spans.push(Span::styled("".to_string(),
+                        spans.push(("".to_string(),
                             Style::new().fg(Color::LightRed).bg(Color::Black)
                         ));
                     }
@@ -142,10 +142,9 @@ fn format_time_series_bits(timeline: &ValueChangeStreamImpl<Bits>, t_from: u64, 
                 (format!("{:<width$}", "Z", width=w), style_bad)
             }
         };
-        spans.push(Span::styled(txt, sty));
+        spans.push((txt, sty));
     }
-
-    ratatui::text::Line::from(spans)
+    spans
 }
 
 pub fn format_values<'a>(app: &'a app::TuiWave, values: &[(String, usize)])
@@ -158,7 +157,11 @@ pub fn format_values<'a>(app: &'a app::TuiWave, values: &[(String, usize)])
             app.t_from,
             app.t_to.min(app.t_last+1),
             app.layout.timedelta_width);
-        lines.push( (path.clone(), line) );
+
+        let spans = line.iter()
+            .map(|(line, sty)| Span::styled(line.clone(), *sty))
+            .collect::<Vec<_>>();
+        lines.push( (path.clone(), Line::from(spans)) );
     }
     lines
 }
