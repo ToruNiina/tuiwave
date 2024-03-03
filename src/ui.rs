@@ -347,8 +347,6 @@ fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 }
 
 pub fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
-
-
     // add side bar showing a list of signals
     let root = Layout::default()
         .direction(Direction::Horizontal)
