@@ -2,7 +2,7 @@ use crate::timeseries::*;
 use crate::app;
 
 use ratatui::symbols;
-use ratatui::style::{Style, Color};
+use ratatui::style::{Style, Stylize, Color};
 use ratatui::text::{Line, Span, Text};
 use ratatui::terminal::Frame;
 use ratatui::layout::{Layout, Constraint, Direction, Rect};
@@ -302,8 +302,6 @@ fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
     }
 }
 
-
-
 fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 
     let values = &app.cache.selected_values;
@@ -318,9 +316,24 @@ fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 
     let tree = &app.cache.scope_tree_lines;
 
+    // let lines = Text::from(tree.iter().map(|x| Line::raw(x)).collect::<Vec<_>>());
+    let mut lines = Vec::new();
+    for (i, s) in tree.iter().enumerate() {
+        let sty = if i == app.focus_tree {
+            if app.focus == app::Focus::Tree {
+                Style::new().underlined().bold()
+            } else {
+                Style::new().underlined()
+            }
+        } else {
+            Style::new()
+        };
+        lines.push(Line::styled(s, sty));
+    }
+
     frame.render_widget(
         Paragraph::new(
-            Text::from(tree.iter().map(|x| Line::raw(x)).collect::<Vec<_>>())
+            Text::from(lines)
         ).block(
             Block::new()
             .borders(Borders::ALL)
