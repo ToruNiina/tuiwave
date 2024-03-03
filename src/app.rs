@@ -54,10 +54,13 @@ impl TuiWave {
             current_width: 0,
             current_height: 0,
         };
-        let mut s = Self{
+
+        let selected_values = Self::list_values(&ts.scope);
+        let scope_tree_lines = Self::draw_scope_tree(&ts.scope);
+        Self{
             ts,
-            selected_values: Vec::new(),
-            scope_tree_lines: Vec::new(),
+            selected_values,
+            scope_tree_lines,
             t_from: 0,
             t_to: t_last+1,
             t_last,
@@ -65,10 +68,7 @@ impl TuiWave {
             line_focused: 0,
             layout,
             should_quit: false
-        };
-        s.selected_values  = s.list_values();
-        s.scope_tree_lines = s.draw_scope_tree();
-        s
+        }
     }
 
     // call it after resizing the window, or changed the rayout parameters
@@ -164,9 +164,9 @@ impl TuiWave {
         }
     }
 
-    fn list_values(&self) -> Vec<(String, usize)> {
+    fn list_values(root: &Scope) -> Vec<(String, usize)> {
         let mut vs = Vec::new();
-        Self::list_values_impl(&self.ts.scope, &self.ts.scope.name, &mut vs);
+        Self::list_values_impl(&root, &root.name, &mut vs);
         vs
     }
 
@@ -204,9 +204,9 @@ impl TuiWave {
             }
         }
     }
-    fn draw_scope_tree(&self) -> Vec<String> {
-        let mut tree = vec![self.ts.scope.name.clone()];
-        Self::draw_scope_tree_impl(&self.ts.scope, &mut tree, "".to_string());
+    fn draw_scope_tree(root: &Scope) -> Vec<String> {
+        let mut tree = vec![root.name.clone()];
+        Self::draw_scope_tree_impl(&root, &mut tree, "".to_string());
         tree
     }
 }
