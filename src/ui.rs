@@ -165,7 +165,7 @@ pub fn format_values<'a>(app: &'a app::TuiWave, values: &[(String, usize)])
 
 fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 
-    let values = &app.selected_values;
+    let values = &app.cache.selected_values;
 
     let line_to = (app.line_from + app.layout.drawable_lines-1).min(values.len());
     let lines = format_values(&app, &values[app.line_from..line_to]);
@@ -306,7 +306,7 @@ fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 
 fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 
-    let values = &app.selected_values;
+    let values = &app.cache.selected_values;
     let name_size = values.len() * 2 + 1;
     let names = Layout::default()
         .direction(Direction::Vertical)
@@ -316,7 +316,7 @@ fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         ])
         .split(*chunk);
 
-    let tree = &app.scope_tree_lines;
+    let tree = &app.cache.scope_tree_lines;
 
     frame.render_widget(
         Paragraph::new(

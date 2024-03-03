@@ -30,9 +30,7 @@ impl Layout {
 
 pub struct TuiWave {
     pub ts: TimeSeries,
-    pub selected_values: Vec<(String, usize)>,
-    pub scope_tree_lines: Vec<String>,
-
+    pub cache: UICache,
     pub t_from: u64,
     pub t_to:   u64,
     pub t_last: u64,
@@ -54,13 +52,11 @@ impl TuiWave {
             current_width: 0,
             current_height: 0,
         };
+        let cache = UICache::new(&ts);
 
-        let selected_values = Self::list_values(&ts.scope);
-        let scope_tree_lines = Self::draw_scope_tree(&ts.scope);
         Self{
             ts,
-            selected_values,
-            scope_tree_lines,
+            cache,
             t_from: 0,
             t_to: t_last+1,
             t_last,
@@ -138,6 +134,21 @@ impl TuiWave {
         }
     }
 
+}
+
+pub struct UICache {
+    pub selected_values: Vec<(String, usize)>,
+    pub scope_tree_lines: Vec<String>,
+}
+
+impl UICache {
+    pub fn new(ts: &TimeSeries) -> Self {
+        Self {
+            selected_values: Self::list_values(&ts.scope),
+            scope_tree_lines: Self::draw_scope_tree(&ts.scope),
+        }
+    }
+
     fn list_values_impl(s: &Scope, path: &String, vs: &mut Vec<(String, usize)>) {
         for item in s.items.iter() {
             if let ScopeItem::Value(v) = item {
@@ -210,3 +221,5 @@ impl TuiWave {
         tree
     }
 }
+
+
