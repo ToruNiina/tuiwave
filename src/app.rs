@@ -38,6 +38,8 @@ pub struct TuiWave {
     pub line_focused: usize,
     pub layout: Layout,
     pub should_quit: bool,
+    pub window_change_mode: bool,
+    pub focus_sidebar: bool
 }
 
 impl TuiWave {
@@ -63,7 +65,9 @@ impl TuiWave {
             line_from: 0,
             line_focused: 0,
             layout,
-            should_quit: false
+            should_quit: false,
+            window_change_mode: false,
+            focus_sidebar: false,
         }
     }
 
@@ -81,27 +85,41 @@ impl TuiWave {
 
     }
 
-    pub fn key_press(&mut self, key: KeyCode, _modifiers: KeyModifiers, _state: KeyEventState) {
+    pub fn key_press(&mut self, key: KeyCode, modifiers: KeyModifiers, _state: KeyEventState) {
         if key == KeyCode::Char('q') {
             self.should_quit = true;
         } else if key == KeyCode::Char('l') || key == KeyCode::Right {
-            self.t_from = self.t_from.saturating_add(1);
-            self.t_to   = self.t_to  .saturating_add(1);
+            if self.window_change_mode {
+                self.focus_sidebar = false;
+                self.window_change_mode = false;
+            } else if !self.focus_sidebar {
+                self.t_from = self.t_from.saturating_add(1);
+                self.t_to   = self.t_to  .saturating_add(1);
+            }
         } else if key == KeyCode::Char('h') || key == KeyCode::Left {
-            if self.t_from != 0 {
-                self.t_from = self.t_from.saturating_sub(1);
-                self.t_to   = self.t_to  .saturating_sub(1);
+            if self.window_change_mode {
+                self.focus_sidebar = true;
+                self.window_change_mode = false;
+            } else if !self.focus_sidebar {
+                if self.t_from != 0 {
+                    self.t_from = self.t_from.saturating_sub(1);
+                    self.t_to   = self.t_to  .saturating_sub(1);
+                }
             }
         } else if key == KeyCode::Char('j') || key == KeyCode::Down {
-            self.line_focused = (self.line_focused + 1).min(self.ts.values.len().saturating_sub(1));
+            if !self.focus_sidebar  {
+                self.line_focused = (self.line_focused + 1).min(self.ts.values.len().saturating_sub(1));
 
-            if (self.layout.drawable_lines + self.line_from).saturating_sub(1) < self.line_focused {
-                self.line_from = self.line_focused - self.layout.drawable_lines + 1;
+                if (self.layout.drawable_lines + self.line_from).saturating_sub(1) < self.line_focused {
+                    self.line_from = self.line_focused - self.layout.drawable_lines + 1;
+                }
             }
         } else if key == KeyCode::Char('k') || key == KeyCode::Up {
-            self.line_focused = self.line_focused.saturating_sub(1);
-            if self.line_focused < self.line_from {
-                self.line_from = self.line_focused;
+            if !self.focus_sidebar  {
+                self.line_focused = self.line_focused.saturating_sub(1);
+                if self.line_focused < self.line_from {
+                    self.line_from = self.line_focused;
+                }
             }
         } else if key == KeyCode::Char('-') {
             self.layout.timedelta_width = self.layout.timedelta_width.saturating_sub(1).max(2);
@@ -117,6 +135,8 @@ impl TuiWave {
             let dt = self.t_to.saturating_sub(self.t_from);
             self.t_to   = self.t_last;
             self.t_from = self.t_last.saturating_sub(dt);
+        } else if modifiers == KeyModifiers::CONTROL && key == KeyCode::Char('w') {
+            self.window_change_mode = true;
         }
     }
 
@@ -150,8 +170,8 @@ impl UICache {
     }
 
     pub fn update(&mut self, ts: &TimeSeries) {
-        selected_values = Self::list_values(&ts.scope);
-        scope_tree_lines = Self::draw_scope_tree(&ts.scope);
+        self.selected_values = Self::list_values(&ts.scope);
+        self.scope_tree_lines = Self::draw_scope_tree(&ts.scope);
     }
 
     fn list_values_impl(s: &Scope, path: &String, vs: &mut Vec<(String, usize)>) {
