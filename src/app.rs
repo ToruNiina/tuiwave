@@ -91,7 +91,6 @@ impl TuiWave {
     pub fn setup_with_terminal_size(&mut self, termsize: Rect) {
         self.layout.resize(termsize.width, termsize.height);
         self.setup_drawable_time_range();
-
     }
 
     pub fn key_press(&mut self, key: KeyCode, modifiers: KeyModifiers, _state: KeyEventState) {
@@ -228,13 +227,13 @@ impl UICache {
         self.scope_tree_lines = Self::draw_scope_tree(&ts.scope);
     }
 
-    fn list_values_impl(s: &Scope, path: &String, vs: &mut Vec<(String, usize)>) {
+    fn list_values_impl(s: &Scope, path: &str, vs: &mut Vec<(String, usize)>) {
         for item in s.items.iter() {
             if let ScopeItem::Value(v) = item {
                 if !v.should_be_rendered() {
                     continue;
                 }
-                let mut path_to_item = path.clone();
+                let mut path_to_item = path.to_string();
                 path_to_item += ".";
                 path_to_item += &v.name;
                 vs.push((path_to_item, v.index));
@@ -245,9 +244,9 @@ impl UICache {
                 if !subscope.should_be_rendered() {
                     continue;
                 }
-                let mut path_to_item = path.clone();
+                let mut path_to_item = path.to_string();
                 path_to_item += ".";
-                path_to_item += &subscope.name;
+                path_to_item += &subscope.name[0..1];
 
                 Self::list_values_impl(subscope, &path_to_item, vs);
             }
@@ -256,7 +255,7 @@ impl UICache {
 
     fn list_values(root: &Scope) -> Vec<(String, usize)> {
         let mut vs = Vec::new();
-        Self::list_values_impl(&root, &root.name, &mut vs);
+        Self::list_values_impl(&root, &root.name[0..1], &mut vs);
         vs
     }
 
