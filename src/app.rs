@@ -151,6 +151,11 @@ impl TuiWave {
             self.t_from = self.t_last.saturating_sub(dt);
         } else if modifiers == KeyModifiers::CONTROL && key == KeyCode::Char('w') {
             self.window_change_mode = true;
+        } else if key == KeyCode::Enter {
+            if self.focus == Focus::Tree {
+                self.flip_scope_tree();
+                self.cache.update(&self.ts);
+            }
         }
     }
 
@@ -166,6 +171,38 @@ impl TuiWave {
         if (n_lines + self.line_from).saturating_sub(1) < self.focus_signal {
             self.line_from = self.focus_signal - n_lines + 1;
         }
+    }
+
+    fn flip_scope_tree_impl(node: &mut Scope, i: &mut usize, flipped: usize) -> bool {
+        if *i == flipped {
+            node.open = !node.open;
+            return true;
+        }
+        *i += 1;
+
+        for item in node.items.iter_mut() {
+            if let ScopeItem::Value(v) = item {
+                if *i == flipped {
+                    v.render = !v.render;
+                    return true;
+                }
+                *i += 1;
+            }
+        }
+        for item in node.items.iter_mut() {
+            if let ScopeItem::Scope(s) = item {
+                let done = Self::flip_scope_tree_impl(s, i, flipped);
+                if done {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    fn flip_scope_tree(&mut self) {
+        let mut idx = 0;
+        let done =  Self::flip_scope_tree_impl(&mut self.ts.scope, &mut idx, self.focus_tree);
+        assert!(done);
     }
 }
 
@@ -259,5 +296,3 @@ impl UICache {
         tree
     }
 }
-
-
