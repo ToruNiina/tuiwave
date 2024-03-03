@@ -302,13 +302,45 @@ fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
     }
 }
 
+fn draw_scope_tree(app: &app::TuiWave, s: &Scope, lines: &mut Vec<String>, indent: String) {
+
+    let n_values: usize = s.items.iter().map(|x| {
+        if let ScopeItem::Value(_) = x { 1 } else { 0 }
+    }).sum();
+
+    let n_scopes: usize = s.items.iter().map(|x| {
+        if let ScopeItem::Scope(_) = x { 1 } else { 0 }
+    }).sum();
+
+    let mut c_values = 0;
+    for item in s.items.iter() {
+        let is_last = (n_scopes == 0) && (c_values + 1) == n_values;
+        if let ScopeItem::Value(v) = item {
+            let cbox = if v.should_be_rendered() { "☑"  } else { "☐"  };
+            let branch = if is_last { "└" } else { "├" };
+            lines.push(format!("{}{}╴{} {}", indent, branch, cbox, v.name));
+            c_values += 1;
+        }
+    }
+
+    let mut c_scopes = 0;
+    for item in s.items.iter() {
+        let is_last = (c_scopes + 1) == n_scopes;
+        if let ScopeItem::Scope(subscope) = item {
+            let branch = if is_last { "└" } else { "├" };
+            let next_indent = indent.clone() + (if is_last { "  " } else { "│ " });
+            lines.push(format!("{}{}╴{}", indent, branch, subscope.name));
+
+            draw_scope_tree(app, subscope, lines, next_indent);
+            c_scopes += 1;
+        }
+    }
+}
+
 fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 
     let values = &app.selected_values;
-    let value_list = values.iter().map(|(x, _)| Line::raw(x)).collect::<Vec<_>>();
-
-    let name_size = value_list.len() * 2 + 1;
-
+    let name_size = values.len() * 2 + 1;
     let names = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -317,8 +349,13 @@ fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         ])
         .split(*chunk);
 
+    let mut tree = vec![app.ts.scope.name.clone()];
+    draw_scope_tree(&app, &app.ts.scope, &mut tree, "".to_string());
+
     frame.render_widget(
-        Paragraph::new(Text::from(value_list)).block(
+        Paragraph::new(
+            Text::from(tree.iter().map(|x| Line::raw(x)).collect::<Vec<_>>())
+        ).block(
             Block::new()
             .borders(Borders::ALL)
             .border_style(Style::new().fg(Color::DarkGray))
