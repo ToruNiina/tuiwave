@@ -116,20 +116,24 @@ impl TuiWave {
                 }
             }
         } else if key == KeyCode::Char('j') || key == KeyCode::Down {
-            if let Focus::Signal = self.focus {
+            if self.focus == Focus::Signal {
                 self.focus_signal =
                     (self.focus_signal + 1).min(self.ts.values.len().saturating_sub(1));
 
                 if (self.layout.drawable_lines + self.line_from).saturating_sub(1) < self.focus_signal {
                     self.line_from = self.focus_signal - self.layout.drawable_lines + 1;
                 }
+            } else {
+                self.focus_tree = (self.focus_tree + 1).min(self.cache.scope_tree_lines.len().saturating_sub(1));
             }
         } else if key == KeyCode::Char('k') || key == KeyCode::Up {
-            if let Focus::Signal = self.focus {
+            if self.focus == Focus::Signal {
                 self.focus_signal = self.focus_signal.saturating_sub(1);
                 if self.focus_signal < self.line_from {
                     self.line_from = self.focus_signal;
                 }
+            } else {
+                self.focus_tree = self.focus_tree.saturating_sub(1)
             }
         } else if key == KeyCode::Char('-') {
             self.layout.timedelta_width = self.layout.timedelta_width.saturating_sub(1).max(2);
