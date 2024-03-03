@@ -41,9 +41,7 @@ pub struct TuiWave {
     pub should_quit: bool,
 }
 
-fn list_values(app: &TuiWave, s: &Scope, path: &String)
-    -> Vec<(String, usize)>
-{
+fn list_values(s: &Scope, path: &String) -> Vec<(String, usize)> {
     let mut vs = Vec::new();
     for item in s.items.iter() {
         if let ScopeItem::Value(v) = item {
@@ -65,7 +63,7 @@ fn list_values(app: &TuiWave, s: &Scope, path: &String)
             path_to_item += ".";
             path_to_item += &subscope.name;
 
-            let subvs = list_values(app, subscope, &path_to_item);
+            let subvs = list_values(subscope, &path_to_item);
             vs.extend(subvs.into_iter());
         }
     }
@@ -109,7 +107,7 @@ impl TuiWave {
         self.layout.resize(termsize.width, termsize.height);
         self.setup_drawable_time_range();
 
-        self.selected_values = list_values(self, &self.ts.scope, &self.ts.scope.name);
+        self.selected_values = list_values(&self.ts.scope, &self.ts.scope.name);
     }
 
     pub fn key_press(&mut self, key: KeyCode, _modifiers: KeyModifiers, _state: KeyEventState) {
