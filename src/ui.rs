@@ -148,7 +148,7 @@ fn format_time_series_bits(timeline: &ValueChangeStreamImpl<Bits>, t_from: u64, 
 }
 
 pub fn format_values<'a>(app: &'a app::TuiWave, values: &[(String, usize)])
-    -> Vec<(String, Line<'a>)>
+    -> Vec<(String, Vec<(String, Style)>)>
 {
     let mut lines = Vec::new();
     for (path, idx) in values.iter() {
@@ -158,10 +158,7 @@ pub fn format_values<'a>(app: &'a app::TuiWave, values: &[(String, usize)])
             app.t_to.min(app.t_last+1),
             app.layout.timedelta_width);
 
-        let spans = line.iter()
-            .map(|(line, sty)| Span::styled(line.clone(), *sty))
-            .collect::<Vec<_>>();
-        lines.push( (path.clone(), Line::from(spans)) );
+        lines.push( (path.clone(), line) );
     }
     lines
 }
@@ -288,8 +285,12 @@ fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
             sublayout[0]
         );
 
+        let spans = line.iter()
+            .map(|(line, sty)| Span::styled(line.clone(), *sty))
+            .collect::<Vec<_>>();
+
         frame.render_widget(
-            Paragraph::new(line.clone())
+            Paragraph::new(Line::from(spans))
                 .block(
                     Block::new()
                         .borders(if is_first {first_sign_borders} else {default_sign_borders})
