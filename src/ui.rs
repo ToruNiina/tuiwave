@@ -325,11 +325,13 @@ fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
             Block::new()
             .borders(Borders::ALL)
             .border_style(Style::new().fg(Color::DarkGray))
+            .border_set(if app.focus_sidebar {symbols::border::THICK} else {symbols::border::PLAIN} )
         ),
         names[0]);
 }
 
 pub fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
+
 
     // add side bar showing a list of signals
     let root = Layout::default()
