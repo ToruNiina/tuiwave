@@ -149,6 +149,11 @@ impl UICache {
         }
     }
 
+    pub fn update(&mut self, ts: &TimeSeries) {
+        selected_values = Self::list_values(&ts.scope);
+        scope_tree_lines = Self::draw_scope_tree(&ts.scope);
+    }
+
     fn list_values_impl(s: &Scope, path: &String, vs: &mut Vec<(String, usize)>) {
         for item in s.items.iter() {
             if let ScopeItem::Value(v) = item {
