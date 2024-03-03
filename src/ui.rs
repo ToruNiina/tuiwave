@@ -302,7 +302,7 @@ fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
     }
 }
 
-fn draw_scope_tree(app: &app::TuiWave, s: &Scope, lines: &mut Vec<String>, indent: String) {
+fn draw_scope_tree_impl(app: &app::TuiWave, s: &Scope, lines: &mut Vec<String>, indent: String) {
 
     let n_values: usize = s.items.iter().map(|x| {
         if let ScopeItem::Value(_) = x { 1 } else { 0 }
@@ -331,10 +331,15 @@ fn draw_scope_tree(app: &app::TuiWave, s: &Scope, lines: &mut Vec<String>, inden
             let next_indent = indent.clone() + (if is_last { "  " } else { "│ " });
             lines.push(format!("{}{}╴{}", indent, branch, subscope.name));
 
-            draw_scope_tree(app, subscope, lines, next_indent);
+            draw_scope_tree_impl(app, subscope, lines, next_indent);
             c_scopes += 1;
         }
     }
+}
+fn draw_scope_tree(app: &app::TuiWave) -> Vec<String> {
+    let mut tree = vec![app.ts.scope.name.clone()];
+    draw_scope_tree_impl(&app, &app.ts.scope, &mut tree, "".to_string());
+    tree
 }
 
 fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
@@ -349,8 +354,7 @@ fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         ])
         .split(*chunk);
 
-    let mut tree = vec![app.ts.scope.name.clone()];
-    draw_scope_tree(&app, &app.ts.scope, &mut tree, "".to_string());
+    let tree = draw_scope_tree(app);
 
     frame.render_widget(
         Paragraph::new(
