@@ -1,6 +1,8 @@
 use crate::timeseries::*;
+use crate::ui;
 
 use ratatui::layout::Rect;
+use ratatui::style::Style;
 
 use crossterm::event::{
     KeyCode, KeyModifiers, KeyEventState
@@ -91,6 +93,7 @@ impl TuiWave {
     pub fn setup_with_terminal_size(&mut self, termsize: Rect) {
         self.layout.resize(termsize.width, termsize.height);
         self.setup_drawable_time_range();
+        self.render_waveform();
     }
 
     pub fn key_press(&mut self, key: KeyCode, modifiers: KeyModifiers, _state: KeyEventState) {
@@ -103,6 +106,7 @@ impl TuiWave {
             } else if self.focus == Focus::Signal {
                 self.t_from = self.t_from.saturating_add(1);
                 self.t_to   = self.t_to  .saturating_add(1);
+                self.render_waveform();
             }
         } else if key == KeyCode::Char('h') || key == KeyCode::Left {
             if self.window_change_mode {
@@ -112,6 +116,7 @@ impl TuiWave {
                 if self.t_from != 0 {
                     self.t_from = self.t_from.saturating_sub(1);
                     self.t_to   = self.t_to  .saturating_sub(1);
+                    self.render_waveform();
                 }
             }
         } else if key == KeyCode::Char('j') || key == KeyCode::Down {
@@ -137,23 +142,28 @@ impl TuiWave {
         } else if key == KeyCode::Char('-') {
             self.layout.timedelta_width = self.layout.timedelta_width.saturating_sub(1).max(2);
             self.setup_drawable_time_range();
+            self.render_waveform();
         } else if key == KeyCode::Char('+') {
             self.layout.timedelta_width = self.layout.timedelta_width.saturating_add(1).max(2);
             self.setup_drawable_time_range();
+            self.render_waveform();
         } else if key == KeyCode::Char('0') {
             let dt = self.t_to.saturating_sub(self.t_from);
             self.t_to   = dt;
             self.t_from = 0;
+            self.render_waveform();
         } else if key == KeyCode::Char('$') {
             let dt = self.t_to.saturating_sub(self.t_from);
             self.t_to   = self.t_last;
             self.t_from = self.t_last.saturating_sub(dt);
+            self.render_waveform();
         } else if modifiers == KeyModifiers::CONTROL && key == KeyCode::Char('w') {
             self.window_change_mode = true;
         } else if key == KeyCode::Enter {
             if self.focus == Focus::Tree {
                 self.flip_scope_tree();
-                self.cache.update(&self.ts);
+                self.cache.update_selection(&self.ts);
+                self.render_waveform();
             }
         }
     }
@@ -207,11 +217,18 @@ impl TuiWave {
         let done =  Self::flip_scope_tree_impl(&mut self.ts.scope, &mut idx, self.focus_tree);
         assert!(done);
     }
+
+    fn render_waveform(&mut self) {
+        let values = &self.cache.selected_values;
+        let line_to = (self.line_from + self.layout.drawable_lines-1).min(values.len());
+        self.cache.signal_timelines = ui::format_values(&self, &values[self.line_from..line_to]);
+    }
 }
 
 pub struct UICache {
     pub selected_values: Vec<(String, usize)>,
     pub scope_tree_lines: Vec<String>,
+    pub signal_timelines: Vec<(String, Vec<(String, Style)>)>,
 }
 
 impl UICache {
@@ -219,10 +236,11 @@ impl UICache {
         Self {
             selected_values: Self::list_values(&ts.scope),
             scope_tree_lines: Self::draw_scope_tree(&ts.scope),
+            signal_timelines: Vec::new(),
         }
     }
 
-    pub fn update(&mut self, ts: &TimeSeries) {
+    pub fn update_selection(&mut self, ts: &TimeSeries) {
         self.selected_values = Self::list_values(&ts.scope);
         self.scope_tree_lines = Self::draw_scope_tree(&ts.scope);
     }

@@ -165,10 +165,7 @@ pub fn format_values<'a>(app: &'a app::TuiWave, values: &[(String, usize)])
 
 fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 
-    let values = &app.cache.selected_values;
-
-    let line_to = (app.line_from + app.layout.drawable_lines-1).min(values.len());
-    let lines = format_values(&app, &values[app.line_from..line_to]);
+    let lines = &app.cache.signal_timelines;
 
     // the first line has all (including top and bottom) borders so takes 3 lines.
     let mut constraints = vec![Constraint::Length(3)];
