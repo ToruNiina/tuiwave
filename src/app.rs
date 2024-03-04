@@ -289,7 +289,8 @@ impl UICache {
             if let ScopeItem::Scope(subscope) = item {
                 let branch = if is_last { "└" } else { "├" };
                 let next_indent = indent.clone() + (if is_last { "  " } else { "│ " });
-                lines.push(format!("{}{}╴{}", indent, branch, subscope.name));
+                let open_icon = if subscope.open { "▼" } else { "▶" };
+                lines.push(format!("{}{}╴{} {}", indent, branch, open_icon, subscope.name));
 
                 Self::draw_scope_tree_impl(subscope, lines, next_indent);
                 c_scopes += 1;
