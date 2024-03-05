@@ -148,7 +148,7 @@ fn format_time_series_bits(timeline: &ValueChangeStreamImpl<Bits>, t_from: u64, 
 }
 
 pub fn format_values(app: & app::TuiWave, values: &[((String, String), usize)])
-    -> Vec<((String, String), Vec<(String, Style)>)>
+    -> Vec<(((String, Style), (String, Style)), Vec<(String, Style)>)>
 {
     let mut lines = Vec::new();
     for ((path, name), idx) in values.iter() {
@@ -158,7 +158,12 @@ pub fn format_values(app: & app::TuiWave, values: &[((String, String), usize)])
             app.t_to.min(app.t_last+1),
             app.layout.timedelta_width);
 
-        lines.push( ((path.clone(), name.clone()), line) );
+        let path_style = Style::new().fg(Color::DarkGray);
+        let name_style = Style::new().bold();
+
+        lines.push((
+            ( (path.clone(), path_style), (name.clone(), name_style) ),
+            line));
     }
     lines
 }
@@ -254,7 +259,7 @@ fn draw_waveform(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         let is_first = idx == 0;
         let is_last = idx+1 == lines.len();
 
-        let ((path, name), line) = &lines[idx];
+        let (((path, path_style), (name, name_style)), line) = &lines[idx];
 
         let sublayout = Layout::default()
             .direction(Direction::Horizontal)
@@ -268,17 +273,18 @@ fn draw_waveform(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         let next_focused = !is_last && (idx+1) == app.focus_signal && app.focus == app::Focus::Signal;
 
         frame.render_widget(
-            Paragraph::new(path.clone() + name)
-                .block(
-                    Block::new()
-                    .borders(if is_first {first_path_borders} else {default_path_borders})
-                    .border_set(if is_last {
-                        if is_focused {last_path_set_focused} else {last_path_set}
-                    } else {
-                        if is_focused {default_path_set_focused} else if next_focused {default_path_set_next_focused} else {default_path_set}
-                    })
-                    .border_style(Style::new().fg(Color::DarkGray))
-                ),
+            Paragraph::new(Line::from(vec![
+                Span::styled(path.clone(), *path_style),
+                Span::styled(name.clone(), *name_style),
+            ])).block(Block::new()
+                .borders(if is_first {first_path_borders} else {default_path_borders})
+                .border_set(if is_last {
+                    if is_focused {last_path_set_focused} else {last_path_set}
+                } else {
+                    if is_focused {default_path_set_focused} else if next_focused {default_path_set_next_focused} else {default_path_set}
+                })
+                .border_style(Style::new().fg(Color::DarkGray))
+            ),
             sublayout[0]
         );
 

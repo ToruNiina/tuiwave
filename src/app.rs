@@ -228,7 +228,7 @@ impl TuiWave {
 pub struct UICache {
     pub selected_values: Vec<((String, String), usize)>,
     pub scope_tree_lines: Vec<String>,
-    pub signal_timelines: Vec<((String, String), Vec<(String, Style)>)>,
+    pub signal_timelines: Vec<(((String, Style), (String, Style)), Vec<(String, Style)>)>,
 }
 
 impl UICache {
