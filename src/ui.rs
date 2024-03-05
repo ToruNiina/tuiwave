@@ -8,7 +8,21 @@ use ratatui::terminal::Frame;
 use ratatui::layout::{Layout, Constraint, Direction, Rect};
 use ratatui::widgets::{Block, Borders, Paragraph};
 
-fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64, width: u64) -> Vec<(String, Style)> {
+pub struct StyledString {
+    string: String,
+    style: Style,
+}
+
+impl StyledString {
+    fn styled(string: String, style: Style) -> Self {
+        Self {string: string.to_string(), style}
+    }
+    fn to_span(&self) -> Span {
+        Span::styled(self.string.clone(), self.style)
+    }
+}
+
+fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64, width: u64) -> Vec<StyledString> {
     if let ValueChangeStream::Bits(ts) = timeline {
         return format_time_series_bits(ts, t_from, t_to, width);
     } else {
@@ -16,7 +30,7 @@ fn format_time_series(timeline: &ValueChangeStream, t_from: u64, t_to: u64, widt
     }
 }
 
-fn format_time_series_bits(timeline: &ValueChangeStreamImpl<Bits>, t_from: u64, t_to: u64, width: u64) -> Vec<(String, Style)> {
+fn format_time_series_bits(timeline: &ValueChangeStreamImpl<Bits>, t_from: u64, t_to: u64, width: u64) -> Vec<StyledString> {
     let mut current_t = t_from;
     let mut current_v = Bits::Z;
 
@@ -70,46 +84,46 @@ fn format_time_series_bits(timeline: &ValueChangeStreamImpl<Bits>, t_from: u64, 
             if txt.chars().count() > w {
                 txt = txt.chars().take(w).collect();
             }
-            spans.push((txt, sty));
+            spans.push(StyledString::styled(txt, sty));
 
             // total_width += 2;
             match change.new_value {
                 Bits::B(x) => {
                     if x {
-                        spans.push(("▇".to_string(), style_bit));
+                        spans.push(StyledString::styled("▇".to_string(), style_bit));
                     } else {
-                        spans.push(("▁".to_string(), style_bit));
+                        spans.push(StyledString::styled("▁".to_string(), style_bit));
                     }
                 }
                 Bits::V(_) => {
-                    spans.push(("".to_string(),
+                    spans.push(StyledString::styled("".to_string(),
                         Style::new().fg(Color::LightGreen).bg(Color::Black)
                     ));
                 }
                 Bits::X => {
                     if currently_bad {
-                        spans.push(("".to_string(),
+                        spans.push(StyledString::styled("".to_string(),
                             Style::new().fg(Color::LightRed).bg(Color::Black)
                         ));
                     } else {
-                        spans.push(("".to_string(),
+                        spans.push(StyledString::styled("".to_string(),
                             Style::new().fg(Color::LightGreen).bg(Color::Black)
                         ));
-                        spans.push(("".to_string(),
+                        spans.push(StyledString::styled("".to_string(),
                             Style::new().fg(Color::LightRed).bg(Color::Black)
                         ));
                     }
                 }
                 Bits::Z => {
                     if currently_bad {
-                        spans.push(("".to_string(),
+                        spans.push(StyledString::styled("".to_string(),
                             Style::new().fg(Color::LightRed).bg(Color::Black)
                         ));
                     } else {
-                        spans.push(("".to_string(),
+                        spans.push(StyledString::styled("".to_string(),
                             Style::new().fg(Color::LightGreen).bg(Color::Black)
                         ));
-                        spans.push(("".to_string(),
+                        spans.push(StyledString::styled("".to_string(),
                             Style::new().fg(Color::LightRed).bg(Color::Black)
                         ));
                     }
@@ -124,31 +138,31 @@ fn format_time_series_bits(timeline: &ValueChangeStreamImpl<Bits>, t_from: u64, 
         let dt = (t_to - current_t).max(1);
         let w = (width * dt) as usize;
 
-        let (txt, sty) = match current_v {
+        let span = match current_v {
             Bits::B(x) => {
                 if x {
-                    ("▇".repeat(w), style_bit)
+                    StyledString::styled("▇".repeat(w), style_bit)
                 } else {
-                    ("▁".repeat(w), style_bit)
+                    StyledString::styled("▁".repeat(w), style_bit)
                 }
             }
             Bits::V(x) => {
-                (format!("{:<width$x}", x.value, width=w), style_var)
+                StyledString::styled(format!("{:<width$x}", x.value, width=w), style_var)
             }
             Bits::X => {
-                (format!("{:<width$}", "X", width=w), style_bad)
+                StyledString::styled(format!("{:<width$}", "X", width=w), style_bad)
             }
             Bits::Z => {
-                (format!("{:<width$}", "Z", width=w), style_bad)
+                StyledString::styled(format!("{:<width$}", "Z", width=w), style_bad)
             }
         };
-        spans.push((txt, sty));
+        spans.push(span);
     }
     spans
 }
 
 pub fn format_values(app: & app::TuiWave, values: &[((String, String), usize)])
-    -> Vec<(((String, Style), (String, Style)), Vec<(String, Style)>)>
+    -> Vec<((StyledString, StyledString), Vec<StyledString>)>
 {
     let mut lines = Vec::new();
     for ((path, name), idx) in values.iter() {
@@ -158,12 +172,10 @@ pub fn format_values(app: & app::TuiWave, values: &[((String, String), usize)])
             app.t_to.min(app.t_last+1),
             app.layout.timedelta_width);
 
-        let path_style = Style::new().fg(Color::DarkGray);
-        let name_style = Style::new().bold();
+        let path = StyledString::styled(path.clone(), Style::default().fg(Color::DarkGray));
+        let name = StyledString::styled(name.clone(), Style::default().bold());
 
-        lines.push((
-            ( (path.clone(), path_style), (name.clone(), name_style) ),
-            line));
+        lines.push( ( (path, name), line) );
     }
     lines
 }
@@ -259,7 +271,7 @@ fn draw_waveform(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         let is_first = idx == 0;
         let is_last = idx+1 == lines.len();
 
-        let (((path, path_style), (name, name_style)), line) = &lines[idx];
+        let ((path, name), line) = &lines[idx];
 
         let sublayout = Layout::default()
             .direction(Direction::Horizontal)
@@ -274,8 +286,8 @@ fn draw_waveform(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 
         frame.render_widget(
             Paragraph::new(Line::from(vec![
-                Span::styled(path.clone(), *path_style),
-                Span::styled(name.clone(), *name_style),
+                path.to_span(),
+                name.to_span(),
             ])).block(Block::new()
                 .borders(if is_first {first_path_borders} else {default_path_borders})
                 .border_set(if is_last {
@@ -289,7 +301,7 @@ fn draw_waveform(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         );
 
         let spans = line.iter()
-            .map(|(line, sty)| Span::styled(line.clone(), *sty))
+            .map(|s| s.to_span())
             .collect::<Vec<_>>();
 
         frame.render_widget(

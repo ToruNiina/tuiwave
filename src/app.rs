@@ -2,7 +2,6 @@ use crate::timeseries::*;
 use crate::ui;
 
 use ratatui::layout::Rect;
-use ratatui::style::Style;
 
 use crossterm::event::{
     KeyCode, KeyModifiers, KeyEventState
@@ -228,7 +227,7 @@ impl TuiWave {
 pub struct UICache {
     pub selected_values: Vec<((String, String), usize)>,
     pub scope_tree_lines: Vec<String>,
-    pub signal_timelines: Vec<(((String, Style), (String, Style)), Vec<(String, Style)>)>,
+    pub signal_timelines: Vec<((ui::StyledString, ui::StyledString), Vec<ui::StyledString>)>,
 }
 
 impl UICache {
