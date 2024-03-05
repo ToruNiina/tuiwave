@@ -85,6 +85,11 @@ pub fn load_vcd<R: std::io::BufRead>(src: R) -> anyhow::Result<TimeSeries> {
     let header = parser.parse_header()?;
     let (mut ts, map) = make_value_tree(&header);
 
+    if let Some((coef, unit)) = header.timescale {
+        ts.time_scale.0 = coef;
+        ts.time_scale.1 = unit.to_string();
+    }
+
     let mut current_t = 0;
 
     for cmd in parser {
@@ -145,6 +150,9 @@ pub fn load_vcd<R: std::io::BufRead>(src: R) -> anyhow::Result<TimeSeries> {
                 } else {
                     panic!("type error");
                 }
+            }
+            vcd::Command::Timescale(_,_) => {
+                panic!("varying timescale is not supported")
             }
             _ => {
                 // dump(format!("not supported command: {:?}", cmd));
