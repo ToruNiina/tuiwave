@@ -226,9 +226,9 @@ impl TuiWave {
 }
 
 pub struct UICache {
-    pub selected_values: Vec<(String, usize)>,
+    pub selected_values: Vec<((String, String), usize)>,
     pub scope_tree_lines: Vec<String>,
-    pub signal_timelines: Vec<(String, Vec<(String, Style)>)>,
+    pub signal_timelines: Vec<((String, String), Vec<(String, Style)>)>,
 }
 
 impl UICache {
@@ -245,7 +245,7 @@ impl UICache {
         self.scope_tree_lines = Self::draw_scope_tree(&ts.scope);
     }
 
-    fn list_values_impl(s: &Scope, path: &str, vs: &mut Vec<(String, usize)>) {
+    fn list_values_impl(s: &Scope, path: &str, vs: &mut Vec<((String, String), usize)>) {
         for item in s.items.iter() {
             if let ScopeItem::Value(v) = item {
                 if !v.should_be_rendered() {
@@ -253,8 +253,7 @@ impl UICache {
                 }
                 let mut path_to_item = path.to_string();
                 path_to_item += ".";
-                path_to_item += &v.name;
-                vs.push((path_to_item, v.index));
+                vs.push(((path_to_item, v.name.clone()), v.index));
             }
         }
         for item in s.items.iter() {
@@ -271,7 +270,7 @@ impl UICache {
         }
     }
 
-    fn list_values(root: &Scope) -> Vec<(String, usize)> {
+    fn list_values(root: &Scope) -> Vec<((String, String), usize)> {
         let mut vs = Vec::new();
         Self::list_values_impl(&root, &root.name[0..1], &mut vs);
         vs

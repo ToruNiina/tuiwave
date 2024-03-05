@@ -147,18 +147,18 @@ fn format_time_series_bits(timeline: &ValueChangeStreamImpl<Bits>, t_from: u64, 
     spans
 }
 
-pub fn format_values<'a>(app: &'a app::TuiWave, values: &[(String, usize)])
-    -> Vec<(String, Vec<(String, Style)>)>
+pub fn format_values(app: & app::TuiWave, values: &[((String, String), usize)])
+    -> Vec<((String, String), Vec<(String, Style)>)>
 {
     let mut lines = Vec::new();
-    for (path, idx) in values.iter() {
+    for ((path, name), idx) in values.iter() {
         let line = format_time_series(
             &app.ts.values[*idx],
             app.t_from,
             app.t_to.min(app.t_last+1),
             app.layout.timedelta_width);
 
-        lines.push( (path.clone(), line) );
+        lines.push( ((path.clone(), name.clone()), line) );
     }
     lines
 }
@@ -254,7 +254,7 @@ fn draw_waveform(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         let is_first = idx == 0;
         let is_last = idx+1 == lines.len();
 
-        let (path, line) = &lines[idx];
+        let ((path, name), line) = &lines[idx];
 
         let sublayout = Layout::default()
             .direction(Direction::Horizontal)
@@ -268,7 +268,7 @@ fn draw_waveform(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         let next_focused = !is_last && (idx+1) == app.focus_signal && app.focus == app::Focus::Signal;
 
         frame.render_widget(
-            Paragraph::new(path.clone())
+            Paragraph::new(path.clone() + name)
                 .block(
                     Block::new()
                     .borders(if is_first {first_path_borders} else {default_path_borders})
