@@ -163,7 +163,7 @@ pub fn format_values<'a>(app: &'a app::TuiWave, values: &[(String, usize)])
     lines
 }
 
-fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
+fn draw_waveform(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 
     let lines = &app.cache.signal_timelines;
 
@@ -306,7 +306,7 @@ fn draw_timeline(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
 
     let values = &app.cache.selected_values;
-    let name_size = values.len() * 2 + 1;
+    let name_size = 3 + values.len() * 2 + 1;
     let names = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -347,6 +347,45 @@ fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         names[0]);
 }
 
+fn draw_ruler(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
+
+    let sublayout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(Constraint::from_percentages([
+            app.layout.signame_width_percent,
+            100 - app.layout.signame_width_percent
+        ]))
+        .split(*chunk);
+
+    let ruler_border = symbols::border::Set {
+        top_left: "┬",
+        bottom_left: "┴",
+        .. symbols::border::PLAIN
+    };
+
+    frame.render_widget(
+        Paragraph::new(
+            Text::from(format!("time [{} {}]", app.ts.time_scale.0, app.ts.time_scale.1))
+        ).block(
+            Block::new()
+            .borders(Borders::TOP | Borders::BOTTOM | Borders::LEFT)
+            .border_style(Style::new().fg(Color::DarkGray))
+            .border_set(symbols::border::PLAIN)
+        ),
+        sublayout[0]);
+
+    frame.render_widget(
+        Paragraph::new(
+            Text::from("TODO: ruler!")
+        ).block(
+            Block::new()
+            .borders(Borders::ALL)
+            .border_style(Style::new().fg(Color::DarkGray))
+            .border_set(ruler_border)
+        ),
+        sublayout[1]);
+}
+
 pub fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
     // add side bar showing a list of signals
     let root = Layout::default()
@@ -357,6 +396,17 @@ pub fn draw_ui(app: &app::TuiWave, frame: &mut Frame) {
         ]))
         .split(frame.size());
 
+    // add ruler on top of waveform
+
+    let waveform = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(vec![
+            Constraint::Length(3),
+            Constraint::Fill(1),
+        ])
+        .split(root[1]);
+
     draw_sidebar(app, frame, &root[0]);
-    draw_timeline(app, frame, &root[1]);
+    draw_ruler(app, frame, &waveform[0]);
+    draw_waveform(app, frame, &waveform[1]);
 }
