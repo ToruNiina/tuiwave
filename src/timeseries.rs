@@ -215,9 +215,11 @@ impl ScopeItem {
 pub struct TimeSeries {
     pub scope: Scope,
     pub values: Vec<ValueChangeStream>,
+    pub time_scale: (u32, String), // (100, "us")
 }
+
 impl TimeSeries {
     pub fn new() -> Self {
-        TimeSeries { scope: Scope::new("top"), values: Vec::new() }
+        TimeSeries { scope: Scope::new("top"), values: Vec::new(), time_scale: (1, "tau".to_string()) }
     }
 }
