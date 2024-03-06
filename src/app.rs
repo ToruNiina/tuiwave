@@ -57,7 +57,7 @@ impl TuiWave {
         let layout = Layout{
             drawable_lines: 0,
             stream_width: t_last + 1,
-            sidebar_width_percent: 15,
+            sidebar_width_percent: 12,
             signame_width_percent: 15,
             timedelta_width: 4,
             current_width: 0,
