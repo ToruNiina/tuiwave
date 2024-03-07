@@ -365,7 +365,7 @@ fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         names[0]);
 }
 
-fn make_ruler(app: &app::TuiWave) -> StyledString {
+fn make_ruler(app: &app::TuiWave) -> (StyledString, StyledString) {
 
     // 0        10        20   ...
     // ┰─────────┰─────────┰── ...
@@ -374,11 +374,23 @@ fn make_ruler(app: &app::TuiWave) -> StyledString {
 
     assert!(app.layout.timedelta_width >= 2);
 
-    let dt = "─".repeat((app.layout.timedelta_width-1) as usize) + "┬";
-    let dt10 = dt.repeat(9) + &("─".repeat((app.layout.timedelta_width-1) as usize)) + "╥";
+    let dt    = "─".repeat((app.layout.timedelta_width-1) as usize) + "┬";
+    let dt10  = dt.repeat(9) + &("─".repeat((app.layout.timedelta_width-1) as usize)) + "╥";
     let ruler = dt10.repeat((t_range / 10 + 1) as usize);
 
-    StyledString::styled(ruler, Style::default())
+    let mut scale = "".to_string();
+    for t in app.t_from..app.t_to {
+        let s = if t % 10 == 0 {
+            format!("{:<width$}", t, width=(app.layout.timedelta_width) as usize)
+        } else {
+            " ".repeat(app.layout.timedelta_width as usize)
+        };
+        scale += &s[0..app.layout.timedelta_width as usize];
+    }
+    (
+        StyledString::styled(scale, Style::default()),
+        StyledString::styled(ruler, Style::default())
+    )
 }
 
 fn draw_ruler(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
@@ -408,11 +420,11 @@ fn draw_ruler(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         ),
         sublayout[0]);
 
-    let ruler = make_ruler(app);
+    let (scale, ruler) = make_ruler(app);
 
     frame.render_widget(
         Paragraph::new(vec![
-            Line::styled("value".to_string(), ruler.style),
+            Line::styled(scale.string, scale.style),
             Line::styled(ruler.string, ruler.style),
         ]).block(
             Block::new()
