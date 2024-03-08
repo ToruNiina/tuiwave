@@ -374,22 +374,19 @@ fn make_ruler(app: &app::TuiWave) -> (StyledString, StyledString) {
     let t_from = app.t_from as usize;
     let t_to   = app.t_to   as usize;
     let t_range = t_to - t_from;
+    let t_width = app.layout.timedelta_width as usize;
 
-    assert!(app.layout.timedelta_width >= 2);
+    assert!(t_width >= 2);
 
     let tick       = make_tick(app, "┬");
     let first_tick = tick.repeat(9 - (t_from % 10)) + &make_tick(app, "╥");
     let tick_x10   = tick.repeat(9)                 + &make_tick(app, "╥");
     let ruler      = first_tick + &tick_x10.repeat(t_range / 10 + 1);
 
-    let mut labels = "".to_string();
-    for t in app.t_from..app.t_to {
-        let s = if (t+1) % 10 == 0 {
-            format!("{:>width$}", t+1, width=(app.layout.timedelta_width) as usize)
-        } else {
-            " ".repeat(app.layout.timedelta_width as usize)
-        };
-        labels += &s[0..app.layout.timedelta_width as usize];
+    let mut labels = format!("{:>width$}", (t_from/10 + 1) * 10, width=t_width * (10 - t_from%10));
+    for i in 1..(t_range/10 + 1) {
+        let t = t_from / 10 * 10 + ((i+1) * 10);
+        labels += &format!("{:>width$}", t, width=t_width * 10);
     }
 
     (
