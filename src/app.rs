@@ -41,6 +41,7 @@ pub struct TuiWave {
     pub t_from: u64,
     pub t_to:   u64,
     pub t_last: u64,
+    pub t_range: u64,
     pub line_from: usize,
     pub layout: Layout,
     pub should_quit: bool,
@@ -71,6 +72,7 @@ impl TuiWave {
             t_from: 0,
             t_to: t_last+1,
             t_last,
+            t_range: t_last,
             line_from: 0,
             layout,
             should_quit: false,
@@ -87,6 +89,7 @@ impl TuiWave {
         self.layout.stream_width = (main_pane * (100 - self.layout.signame_width_percent) / 100) as u64;
         let time_range = self.layout.stream_width / self.layout.timedelta_width;
         self.t_to = (self.t_from + time_range).min(self.t_last+1);
+        self.t_range = self.t_to - self.t_from;
     }
 
     pub fn setup_with_terminal_size(&mut self, termsize: Rect) {
@@ -103,8 +106,8 @@ impl TuiWave {
                 self.focus = Focus::Signal;
                 self.window_change_mode = false;
             } else if self.focus == Focus::Signal {
-                self.t_from = self.t_from.saturating_add(1);
-                self.t_to   = self.t_to  .saturating_add(1);
+                self.t_from = self.t_from.saturating_add(1).min(self.t_last);
+                self.t_to   = self.t_to  .saturating_add(1).min(self.t_last + self.t_range);
                 self.render_waveform();
             }
         } else if key == KeyCode::Char('h') || key == KeyCode::Left {
