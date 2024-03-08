@@ -365,30 +365,35 @@ fn draw_sidebar(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         names[0]);
 }
 
+fn make_tick(app: &app::TuiWave, tick: &str) -> String {
+    "─".repeat((app.layout.timedelta_width-1) as usize) + tick
+}
+
 fn make_ruler(app: &app::TuiWave) -> (StyledString, StyledString) {
 
-    // 0        10        20   ...
-    // ┰─────────┰─────────┰── ...
-
-    let t_range = app.t_to - app.t_from;
+    let t_from = app.t_from as usize;
+    let t_to   = app.t_to   as usize;
+    let t_range = t_to - t_from;
 
     assert!(app.layout.timedelta_width >= 2);
 
-    let dt    = "─".repeat((app.layout.timedelta_width-1) as usize) + "┬";
-    let dt10  = dt.repeat(9) + &("─".repeat((app.layout.timedelta_width-1) as usize)) + "╥";
-    let ruler = dt10.repeat((t_range / 10 + 1) as usize);
+    let tick       = make_tick(app, "┬");
+    let first_tick = tick.repeat(9 - (t_from % 10)) + &make_tick(app, "╥");
+    let tick_x10   = tick.repeat(9)                 + &make_tick(app, "╥");
+    let ruler      = first_tick + &tick_x10.repeat(t_range / 10 + 1);
 
-    let mut scale = "".to_string();
+    let mut labels = "".to_string();
     for t in app.t_from..app.t_to {
-        let s = if t % 10 == 0 {
-            format!("{:<width$}", t, width=(app.layout.timedelta_width) as usize)
+        let s = if (t+1) % 10 == 0 {
+            format!("{:>width$}", t+1, width=(app.layout.timedelta_width) as usize)
         } else {
             " ".repeat(app.layout.timedelta_width as usize)
         };
-        scale += &s[0..app.layout.timedelta_width as usize];
+        labels += &s[0..app.layout.timedelta_width as usize];
     }
+
     (
-        StyledString::styled(scale, Style::default()),
+        StyledString::styled(labels, Style::default()),
         StyledString::styled(ruler, Style::default())
     )
 }
@@ -420,11 +425,11 @@ fn draw_ruler(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
         ),
         sublayout[0]);
 
-    let (scale, ruler) = make_ruler(app);
+    let (labels, ruler) = make_ruler(app);
 
     frame.render_widget(
         Paragraph::new(vec![
-            Line::styled(scale.string, scale.style),
+            Line::styled(labels.string, labels.style),
             Line::styled(ruler.string, ruler.style),
         ]).block(
             Block::new()
