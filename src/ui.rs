@@ -383,10 +383,16 @@ fn make_ruler(app: &app::TuiWave) -> (StyledString, StyledString) {
     let tick_x10   = tick.repeat(9)                 + &make_tick(app, "╥");
     let ruler      = first_tick + &tick_x10.repeat(t_range / 10 + 1);
 
-    let mut labels = format!("{:>width$}", (t_from/10 + 1) * 10, width=t_width * (10 - t_from%10));
+    let mut labels = {
+        let w = t_width * (10 - t_from%10);
+        let label = format!("{:>width$}", (t_from/10 + 1) * 10, width=w);
+        label[0..w].to_string()
+    };
     for i in 1..(t_range/10 + 1) {
         let t = t_from / 10 * 10 + ((i+1) * 10);
-        labels += &format!("{:>width$}", t, width=t_width * 10);
+        let w = t_width * 10;
+        let label = format!("{:>width$}", t, width=w);
+        labels += &label[0..w];
     }
 
     (
