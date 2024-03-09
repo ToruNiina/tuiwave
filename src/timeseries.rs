@@ -1,11 +1,11 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct UInt {
-    pub value: u64,
+    pub value: u128,
     pub width: usize,
 }
 
 impl UInt {
-    pub fn new(value: u64, width: usize) -> UInt {
+    pub fn new(value: u128, width: usize) -> UInt {
         UInt{value, width}
     }
 }
@@ -29,7 +29,7 @@ impl Bits {
     }
     pub fn from_vcd_vector(value: vcd::Vector) -> Self {
         let w = value.len();
-        assert!(w <= 64);
+        assert!(w <= 128);
 
         if w == 0 {
             return Bits::B(false);
@@ -45,7 +45,7 @@ impl Bits {
 
         let bits: Vec<vcd::Value> = value.iter().collect();
         let mut v = UInt::new(0, w);
-        let mut digit: u64 = 1;
+        let mut digit: u128 = 1;
         for bit in bits.iter().rev() {
             match bit {
                 vcd::Value::V0 => { /* do nothing */ }
