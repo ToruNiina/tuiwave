@@ -23,9 +23,8 @@ impl Layout {
         self.current_width = w;
         self.current_height = h - 3; // ruler: 3
 
-        let n_lines = self.current_height as usize / 2;
-        let n_lines = if self.current_height % 2 == 1 { n_lines } else { n_lines - 1 };
-        self.drawable_lines = n_lines;
+        // -1 for the first border line
+        self.drawable_lines = (self.current_height-1) as usize / 2;
     }
 }
 
@@ -224,7 +223,7 @@ impl TuiWave {
 
     fn render_waveform(&mut self) {
         let values = &self.cache.selected_values;
-        let line_to = (self.line_from + self.layout.drawable_lines-1).min(values.len());
+        let line_to = (self.line_from + self.layout.drawable_lines).min(values.len()-1);
         self.cache.signal_timelines = ui::format_values(&self, &values[self.line_from..line_to]);
     }
 }
