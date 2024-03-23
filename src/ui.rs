@@ -281,8 +281,9 @@ fn draw_waveform(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
             ]))
             .split(layout[idx]);
 
-        let is_focused = (idx == app.focus_signal) && app.focus == app::Focus::Signal;
-        let next_focused = !is_last && (idx+1) == app.focus_signal && app.focus == app::Focus::Signal;
+        let relative_focus = app.focus_signal - app.line_from;
+        let is_focused = (idx == relative_focus) && app.focus == app::Focus::Signal;
+        let next_focused = !is_last && (idx+1) == relative_focus && app.focus == app::Focus::Signal;
 
         frame.render_widget(
             Paragraph::new(Line::from(vec![
