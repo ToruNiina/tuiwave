@@ -122,8 +122,8 @@ impl TuiWave {
             }
         } else if key == KeyCode::Char('j') || key == KeyCode::Down {
             if self.focus == Focus::Signal {
-                self.focus_signal =
-                    (self.focus_signal + 1).min(self.ts.values.len().saturating_sub(1));
+                self.focus_signal = (self.focus_signal + 1)
+                    .min(self.ts.values.len().saturating_sub(1));
 
                 if (self.layout.drawable_lines + self.line_from).saturating_sub(1) < self.focus_signal {
                     self.line_from = self.focus_signal - self.layout.drawable_lines + 1;
@@ -223,8 +223,8 @@ impl TuiWave {
 
     fn render_waveform(&mut self) {
         let values = &self.cache.selected_values;
-        let line_to = (self.line_from + self.layout.drawable_lines).min(values.len()-1);
-        self.cache.signal_timelines = ui::format_values(&self, &values[self.line_from..line_to]);
+        let line_to = (self.line_from + self.layout.drawable_lines - 1).min(values.len()-1);
+        self.cache.signal_timelines = ui::format_values(&self, &values[self.line_from..=line_to]);
     }
 }
 
