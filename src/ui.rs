@@ -187,7 +187,7 @@ fn draw_waveform(app: &app::TuiWave, frame: &mut Frame, chunk: &Rect) {
     // the first line has all (including top and bottom) borders so takes 3 lines.
     let mut constraints = vec![Constraint::Length(3)];
     // other lines does not have top border. takes 2 lines.
-    constraints.extend(Constraint::from_lengths(std::iter::repeat(2).take(lines.len())));
+    constraints.extend(vec![Constraint::Length(2); lines.len()-1]);
 
     let layout = Layout::default()
         .direction(Direction::Vertical)
