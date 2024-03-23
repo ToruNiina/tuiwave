@@ -2,6 +2,7 @@ use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::io::BufWriter;
 
+#[allow(dead_code)]
 pub fn dump(log: String) {
     let file = OpenOptions::new()
         .append(true)
