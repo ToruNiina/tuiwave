@@ -128,6 +128,7 @@ impl TuiWave {
 
                 if (self.layout.drawable_lines + self.line_from).saturating_sub(1) < self.focus_signal {
                     self.line_from = self.focus_signal - self.layout.drawable_lines + 1;
+                    self.render_waveform();
                 }
             } else {
                 self.focus_tree = (self.focus_tree + 1).min(self.cache.scope_tree_lines.len().saturating_sub(1));
@@ -137,6 +138,7 @@ impl TuiWave {
                 self.focus_signal = self.focus_signal.saturating_sub(1);
                 if self.focus_signal < self.line_from {
                     self.line_from = self.focus_signal;
+                    self.render_waveform();
                 }
             } else {
                 self.focus_tree = self.focus_tree.saturating_sub(1)
