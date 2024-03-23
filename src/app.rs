@@ -21,7 +21,7 @@ pub struct Layout {
 impl Layout {
     fn resize(&mut self, w: u16, h: u16) {
         self.current_width = w;
-        self.current_height = h;
+        self.current_height = h - 3; // ruler: 3
 
         let n_lines = self.current_height as usize / 2;
         let n_lines = if self.current_height % 2 == 1 { n_lines } else { n_lines - 1 };
