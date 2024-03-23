@@ -23,6 +23,6 @@ It requries powerline fonts or nerdfonts.
 | `-`      | zoom out        |
 |          |                 |
 | `Ctrl-w` | move between sidebar and main pain |
-| `Enter`  | turn on/off checkbox (on sidebar)  |
+| `Enter`  | turn on/off checkbox, toggle tree (on sidebar)  |
 
 
